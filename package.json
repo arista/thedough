@@ -5,9 +5,9 @@
   "license": "MIT",
   "author": "Nathan Abramson",
   "private": false,
-  "main": "build/dist/src/lib/index.js",
-  "module": "build/dist/src/lib/index.es.js",
-  "types": "build/dist/src/lib/index.d.ts",
+  "main": "build/dist/src/lib/exports.js",
+  "module": "build/dist/src/lib/exports.es.js",
+  "types": "build/dist/src/lib/exports.d.ts",
   "files": [
     "build/dist"
   ],
