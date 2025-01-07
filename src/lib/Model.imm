@@ -1,0 +1,188 @@
+import {A,M} from "../../../src/lib/index.js"
+import * as Plaid from "plaid"
+
+entity Config {
+  id: number(auto-increment)
+
+  owns-one plaidConfig: PlaidConfig whose configId = id
+}
+
+entity PlaidConfig {
+  id: number(auto-increment)
+  configId: number
+  plaidClientId: string
+  plaidSecret: string
+  clientUserId: string
+  clientName: string
+  products: A.ConfigFile.Products
+  countryCodes: A.ConfigFile.CountryCodes
+
+  owns-many plaidItems: PlaidItemConfig whose plaidConfigId = id {
+    byName: HashMap(unique) by (name)
+  }
+}
+
+entity PlaidItemConfig {
+  id: number(auto-increment)
+  plaidConfigId: number
+  name: string
+  displayName: string
+  plaidAccessToken: string
+  plaidItemId: string
+
+  owns-many accounts: PlaidAccountConfig whose plaidItemConfigId = id {
+    byName: HashMap(unique) by (name)
+  }
+
+  index byDisplayName: SortedList(unique) by (displayName, plaidAccessToken)
+  index byPlaidItemId: HashMap(unique) by (plaidItemId)
+}
+
+entity PlaidAccountConfig {
+  id: number(auto-increment)
+  plaidItemConfigId: number
+  plaidAccountId: string
+  name: string
+  displayName: string
+
+  index all:HashSet
+  index byPlaidAccountId: HashMap(unique) by (plaidAccountId)
+}
+
+entity SourceTransaction {
+  transactionId: string
+  accountName: string
+  date: string
+  amountInCents: number
+  name: string
+  description: string
+  currency: string
+  checkNumber?: string
+  suggestedCategory?: string
+
+  belongs-to journalEntry?:JournalEntry whose sourceTransactionId = transactionId
+
+  index all: HashSet
+  index byTransactionId: HashMap(unique) by (transactionId)
+  index byDate: SortedList(unique) by(date, transactionId)
+}
+
+entity PlaidTransaction extends SourceTransaction {
+  plaidAccountId: string
+  plaidTransaction: Plaid.Transaction
+}
+
+entity Account {
+  id: string
+  mut parentAccountId?: string
+  parentName?: string
+  name: string
+  displayName: string
+  creditOrDebit?: A.JournalConfig.CreditOrDebit
+  description?: string
+  order: number
+
+  actualCreditOrDebit: A.JournalConfig.CreditOrDebit(computed)
+
+  index all:HashSet
+  index byName: HashMap by (name)
+
+  index byParentAccountId: HashMap by (parentAccountId(include-null)) {
+    inOrder: SortedList by (order)
+  }
+
+  index byParentName: HashMap by (parentName(include-null)) {
+    inOrder: SortedList by (order)
+  }
+
+  belongs-to parent?: Account whose id = parentAccountId
+  owns-many children: Account whose parentAccountId = id {
+    inOrder: SortedList by (order)
+  }
+
+  has-many journalEntryAccounts: JournalEntryAccount whose accountId = id {
+    actuals: HashSet if(isActual)
+  }
+
+  // All entries including those from child and descendant accounts
+  has-many allEntries:AccountEntry whose accountId = id {
+    actuals: HashSet if(isActual)
+    byDate:SortedList(unique) by (date, id)
+  }
+
+  has-many currentBalances: CurrentAccountBalance whose accountId = id {
+    byCurrency:SortedList(unique) by (currency)
+  }
+}
+
+entity JournalEntry {
+  id: string
+  date: string
+  memo?: string
+  sourceTransactionId?: string
+  createdAt: string
+  budgetOrActual: A.JournalConfig.BudgetOrActual
+
+  index all:HashSet
+  index byId: HashMap(unique) by (id)
+  index bySourceTransactionId: HashMap(unique) by (sourceTransactionId)
+
+  belongs-to sourceTransaction?: SourceTransaction whose transactionId = sourceTransactionId
+  owns-many journalEntryAccounts: JournalEntryAccount whose journalEntryId = id
+}
+
+entity JournalEntryAccount {
+  id: number(auto-increment)
+  journalEntryId: string
+  accountId: string
+  creditOrDebit: A.JournalConfig.CreditOrDebit
+  currency: string
+  amountInCents: number
+
+  budgetOrActual: A.JournalConfig.BudgetOrActual(computed)
+  isActual: boolean(computed)
+
+  index all:HashSet
+  belongs-to journalEntry: JournalEntry whose id = journalEntryId
+  belongs-to account: Account whose id = accountId
+}
+
+// These are used to represent a JournalEntryAccount both in an
+// Account and all that Account's ancestors
+entity AccountEntry {
+  id: number(auto-increment)
+  accountId: string
+  journalEntryAccountId: number
+
+  date: string(computed)
+  budgetOrActual: A.JournalConfig.BudgetOrActual(computed)
+  isActual: boolean(computed)
+
+  belongs-to account: Account whose id = accountId
+  belongs-to journalEntryAccount: JournalEntryAccount whose id = journalEntryAccountId
+
+  has-many runningBalances: RunningAccountBalance whose accountEntryId = id {
+    byCurrency:SortedList(unique) by (currency)
+  }
+}
+
+entity CurrentAccountBalance {
+  id: number(auto-increment)
+  accountId: string
+  currency: string
+  mut actualBalanceInCents: number
+  mut budgetBalanceInCents: number
+
+  belongs-to account: Account whose id = accountId
+}
+
+// The running balance for an account
+entity RunningAccountBalance {
+  id: number(auto-increment)
+  accountEntryId: number
+  currency: string
+  actualBalanceInCents: number
+  budgetBalanceInCents: number
+
+  belongs-to accountEntry: AccountEntry whose id = accountEntryId
+}

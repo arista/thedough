@@ -1,0 +1,136 @@
+import {A, M} from "../index.js"
+import * as Plaid from "plaid"
+import fs from "node:fs"
+import Path from "node:path"
+
+export class SourceTransactionLoader {
+  constructor(
+    public props: {
+      model: M.Model
+      plaidConfig: M.entities.PlaidConfig
+      sourceTransactionPaths: M.SourceTransactionPaths
+    }
+  ) {}
+
+  loadNewPlaidTransactions(
+    loadSpec: LoadSpec
+  ): Array<A.Model.entities.SourceTransaction> {
+    // Load all transactions from the adjacent years, just in case
+    // there are any that were not downloaded during the exact year
+    const {startDate, endDate} = loadSpec
+    const startYear = loadSpec.startDate.getFullYear() - 1
+    const endYear = loadSpec.endDate.getFullYear() + 1
+
+    const run = (): Array<A.Model.entities.SourceTransaction> => {
+      const ret: Array<A.Model.entities.SourceTransaction> = []
+      const plaidItems = this.props.plaidConfig.plaidItems.entitiesArray
+      for (const plaidItemConfig of plaidItems) {
+        const newItemTransactions =
+          loadNewPlaidItemTransactions(plaidItemConfig)
+        ret.push(...newItemTransactions)
+      }
+      return ret
+    }
+
+    const loadNewPlaidItemTransactions = (
+      plaidItemConfig: M.entities.PlaidItemConfig
+    ): Array<A.Model.entities.SourceTransaction> => {
+      const ret: Array<A.Model.entities.SourceTransaction> = []
+      const dir = Path.join(
+        this.props.sourceTransactionPaths.getPlaidItemDownloadedTransactionsDir(
+          plaidItemConfig.name
+        ),
+        "byEndingYear"
+      )
+      for (const dirent of fs.readdirSync(dir, {withFileTypes: true})) {
+        if (dirent.isDirectory()) {
+          const year = parseInt(dirent.name)
+          if (!isNaN(year) && year >= startYear && year <= endYear) {
+            const yearDir = Path.join(dir, dirent.name)
+            for (const dirent of fs.readdirSync(yearDir, {
+              withFileTypes: true,
+            })) {
+              if (dirent.isFile()) {
+                const filename = Path.join(yearDir, dirent.name)
+                const newItemTransactions =
+                  loadNewPlaidItemTransactionsFromFile(
+                    plaidItemConfig,
+                    filename
+                  )
+                ret.push(...newItemTransactions)
+              }
+            }
+          }
+        }
+      }
+      return ret
+    }
+
+    const loadNewPlaidItemTransactionsFromFile = (
+      plaidItemConfig: M.entities.PlaidItemConfig,
+      file: string
+    ): Array<A.Model.entities.SourceTransaction> => {
+      const ret: Array<A.Model.entities.SourceTransaction> = []
+      const plaidResponse: Plaid.TransactionsGetResponse =
+        A.Utils.readJsonFile(file)
+      for (const transaction of plaidResponse.transactions) {
+        const {
+          account_id,
+          amount,
+          iso_currency_code,
+          unofficial_currency_code,
+          check_number,
+          date,
+          name,
+          original_description,
+          transaction_id,
+          authorized_date,
+          datetime,
+          transaction_code,
+          category,
+          pending,
+        } = transaction
+        const transactionId = `plaid-${transaction_id}`
+        const parsedDate = new Date(Date.parse(date))
+        if (
+          parsedDate >= startDate &&
+          parsedDate < endDate &&
+          !pending &&
+          !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
+            transactionId
+          )
+        ) {
+          const suggestedCategory =
+            category != null && category.length > 0 ? category.join("/") : null
+          const plaidAccountConfig =
+            this.props.model.entities.PlaidAccountConfig.byPlaidAccountId.get(
+              account_id
+            )
+          const accountName = plaidAccountConfig.name
+          const plaidTransaction =
+            this.props.model.entities.PlaidTransaction.add({
+              transactionId,
+              accountName,
+              date: A.Utils.dateToYYYYMMDD(parsedDate),
+              amountInCents: Math.floor(amount * 100 + 0.5),
+              currency: iso_currency_code || unofficial_currency_code || "USD",
+              plaidAccountId: account_id,
+              name,
+              description: original_description || name,
+              suggestedCategory,
+              plaidTransaction: transaction,
+            })
+          ret.push(plaidTransaction)
+        }
+      }
+      return ret
+    }
+
+    return run()
+  }
+}
+
+export interface LoadSpec {
+  startDate: Date
+  endDate: Date
+}
