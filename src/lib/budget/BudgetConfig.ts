@@ -21,3 +21,5 @@ export interface ScheduledEntryAccount {
   amountInCents?: number
   currency?: string
 }
+
+export type BudgetConfigsByName = {[name:string]:()=>BudgetConfig}

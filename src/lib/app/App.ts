@@ -3,7 +3,9 @@ import Path from "node:path"
 import fs from "node:fs"
 import columnify from "columnify"
 
-export interface AppProps {}
+export interface AppProps {
+  configFile: M.ConfigFile
+}
 
 export class App {
   constructor(public props: AppProps) {}
@@ -15,7 +17,7 @@ export class App {
 
   _configFile: M.ConfigFile | null = null
   get configFile(): M.ConfigFile {
-    return (this._configFile ||= M.TaterdoughConfig)
+    return (this._configFile ||= this.props.configFile)
   }
 
   _config: M.entities.Config | null = null
@@ -155,8 +157,8 @@ export class App {
     sourceTransactionsFilename: string
   } {
     const journalConfigFn = A.Utils.notNull(
-      M.JournalConfigs[configName],
-      `searching JournalConfigs.ts for "${configName}"`
+      this.configFile.journalConfigs[configName],
+      `searching journalConfigs for "${configName}"`
     )
     const journalConfig = journalConfigFn()
     const {startDate, endDate, chartOfAccounts} = journalConfig
@@ -219,7 +221,7 @@ export class App {
     }
 
     // Add the budget entries
-    A.BudgetJournal.addBudgetJournalEntries({configName, model})
+    this.loadBudget({configName, model})
 
     return {
       journalDir,
@@ -229,6 +231,23 @@ export class App {
       classifiedTransactions,
       sourceTransactionsFilename,
     }
+  }
+
+  loadBudget({model, configName}: {model: M.Model; configName: string}) {
+    const budgetConfigFn = A.Utils.notNull(
+      this.configFile.budgetConfigs[configName],
+      `searching budgetConfigs for "${configName}"`
+    )
+    const budgetConfig = budgetConfigFn()
+    const {startDate, endDate, entries} = budgetConfig
+
+    A.ScheduledEntry.addScheduledJournalEntries({
+      entries,
+      startDate,
+      endDate,
+      model,
+      budgetOrActual: "budget",
+    })
   }
 
   async run({configName}: {configName: string}) {
@@ -346,7 +365,7 @@ export class App {
     }
 
     // Add the budget entries
-    A.BudgetJournal.addBudgetJournalEntries({configName, model})
+    this.loadBudget({configName, model})
   }
 
   async unclassify({

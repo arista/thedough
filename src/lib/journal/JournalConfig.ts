@@ -20,3 +20,5 @@ export interface Account {
 
 export type CreditOrDebit = "credit" | "debit"
 export type BudgetOrActual = "budget" | "actual"
+
+export type JournalConfigsByName = {[name:string]:()=>JournalConfig}

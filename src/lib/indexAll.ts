@@ -27,5 +27,4 @@ export * as Classification from "./journal/Classification.js"
 export * as ClassificationRule from "./journal/ClassificationRule.js"
 export type * as IApi from "./server/IApi.js"
 
-export * as BudgetJournal from "./budget/BudgetJournal.js"
 export * as BudgetConfig from "./budget/BudgetConfig.js"
