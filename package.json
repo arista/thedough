@@ -1,0 +1,81 @@
+{
+  "name": "thedough",
+  "version": "0.0.1",
+  "description": "Libraries for tracking finances and budgets",
+  "license": "MIT",
+  "author": "Nathan Abramson",
+  "private": false,
+  "main": "build/dist/src/lib/index.js",
+  "module": "build/dist/src/lib/index.es.js",
+  "types": "build/dist/src/lib/index.d.ts",
+  "files": [
+    "build/dist"
+  ],
+  "oclif": {
+    "bin": "thedough",
+    "commands": "./build/dist/src/cli/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found",
+      "@oclif/plugin-autocomplete"
+    ],
+    "topicSeparator": " "
+  },
+  "type": "module",
+  "scripts": {
+    "prettier": "npx prettier --write src/**/*.{ts,tsx,css,scss,html,json,js}",
+    "tsc": "npx tsc -b",
+    "tsc-watch": "npx tsc -b -w",
+    "rollup": "npx rollup -c rollup.config.js",
+    "rollup-watch": "npx rollup -w -c rollup.config.js",
+    "test-only": "node --test --test-only build/dist/test/**/*.test.js",
+    "test": "node --test build/dist/test/**/*.test.js",
+    "test-watch": "node --test --watch build/dist/test/**/*.test.js",
+    "tailwind": "npx tailwindcss -i src/lib/server/public/html/styles/webapp.css -o build/webapp/styles/webapp.css",
+    "tailwind-watch": "npx tailwindcss --watch -i src/lib/server/public/html/styles/webapp.css -o build/webapp/styles/webapp.css",
+    "lint": "npx eslint src/**/*.{js,ts,tsx}",
+    "model": "npx immodel generate src/lib/Model.imm build/generated/Model",
+    "model-watch": "npx immodel generate --watch src/lib/Model.imm build/generated/Model"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/breejs__later": "^4.1.5",
+    "@types/columnify": "^1.5.4",
+    "@types/express": "^5.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "concurrently": "^9.0.1",
+    "immodel-ts-codegen": "file:../immodel-ts/immodel-ts-codegen",
+    "oclif": "^4.15.9",
+    "prettier": "^3.3.3",
+    "rollup": "^4.24.3",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@breejs/later": "^4.2.0",
+    "@heroicons/react": "^2.1.5",
+    "@oclif/core": "^4.0.29",
+    "@oclif/plugin-autocomplete": "^3.2.6",
+    "@oclif/plugin-help": "^6.2.15",
+    "@oclif/plugin-not-found": "^3.2.22",
+    "@rollup/plugin-replace": "^6.0.1",
+    "canonicalize": "^2.0.0",
+    "columnify": "^1.6.0",
+    "csv-stringify": "^6.5.1",
+    "express": "^4.21.1",
+    "immodel-ts-runtime": "file:../immodel-ts/immodel-ts-runtime",
+    "live-value": "^0.0.7",
+    "pkg-dir": "^8.0.0",
+    "plaid": "^29.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-plaid-link": "^3.6.1",
+    "react-router-dom": "^6.27.0",
+    "short-uuid": "^5.2.0",
+    "tailwindcss": "^3.4.14"
+  }
+}

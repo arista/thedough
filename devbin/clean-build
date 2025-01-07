@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Fail on command failure, undefined variables, and piped command failures
+set -euo pipefail
+
+# Get the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+cd ${DIR}/..
+devbin/clean
+npm install
+devbin/build

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Fail on command failure, undefined variables, and piped command failures
+set -euo pipefail
+
+# Get the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Directly execute modules instead of using npm, which doesn't handle
+# signals well and isn't intended for use with process managers
+# (https://stackoverflow.com/questions/61418014/controlling-unix-ipc-signals-in-npm-scripts)
+cd ${DIR}/..
+exec node_modules/.bin/concurrently \
+npm:model-watch \
+npm:tsc-watch \
+npm:rollup-watch \
+npm:tailwind-watch \
+

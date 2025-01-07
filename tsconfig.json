@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "Node16",
+    "outDir": "./build/dist",
+    "rootDir": ".",
+    "strict": true,
+    "target": "es2022",
+    "moduleResolution": "node16",
+
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "./src/**/*",
+    "./build/generated/**/*"
+  ],
+  "ts-node": {
+    "esm": true
+  }
+}
