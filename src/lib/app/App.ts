@@ -3,9 +3,7 @@ import Path from "node:path"
 import fs from "node:fs"
 import columnify from "columnify"
 
-export interface AppProps {
-  configFile: M.ConfigFile
-}
+export interface AppProps {}
 
 export class App {
   constructor(public props: AppProps) {}
@@ -15,9 +13,17 @@ export class App {
     return (this._model ||= A.AppModel.createModel())
   }
 
+  _configFileName: string | null = null
+  get configFileName(): string {
+    return (this._configFileName ||= A.Utils.notNull(
+      process.env["THEDOUGH_CONFIG_FILE"],
+      "Environment variable THEDOUGH_CONFIG_FILE"
+    ))
+  }
+
   _configFile: M.ConfigFile | null = null
   get configFile(): M.ConfigFile {
-    return (this._configFile ||= this.props.configFile)
+    return (this._configFile ||= require(this.configFileName))
   }
 
   _config: M.entities.Config | null = null
@@ -26,6 +32,11 @@ export class App {
       model: this.model,
       configFile: this.configFile,
     }))
+  }
+
+  _dataDirectory: string | null = null
+  get dataDirectory(): string {
+    return (this._dataDirectory ||= this.configFile.dataDirectory)
   }
 
   _plaidConfig: M.entities.PlaidConfig | null = null
@@ -45,7 +56,9 @@ export class App {
 
   _sourceTransactionPaths: M.SourceTransactionPaths | null = null
   get sourceTransactionPaths(): M.SourceTransactionPaths {
-    return (this._sourceTransactionPaths ||= new M.SourceTransactionPaths({}))
+    return (this._sourceTransactionPaths ||= new M.SourceTransactionPaths({
+      dataDirectory: this.dataDirectory,
+    }))
   }
 
   _transactionDownloader: M.TransactionDownloader | null = null
@@ -166,8 +179,7 @@ export class App {
     A.Accounts.checkPlaidAccounts(model)
 
     const journalDir = Path.join(
-      Path.dirname(A.Utils.getPackageDirectory()),
-      "data",
+      this.dataDirectory,
       "journals",
       journalConfig.journalDir
     )

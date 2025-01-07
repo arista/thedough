@@ -2,14 +2,11 @@ import {A, M} from "../index.js"
 import Path from "node:path"
 
 export class SourceTransactionPaths {
-  constructor(public props: {}) {}
+  constructor(public props: {dataDirectory: string}) {}
 
   get downloadedTransactionsBaseDir(): string {
-    return Path.join(
-      Path.dirname(A.Utils.getPackageDirectory()),
-      "data",
-      "downloadedTransactions"
-    )
+    const {dataDirectory} = this.props
+    return Path.join(dataDirectory, "downloadedTransactions")
   }
 
   getPlaidItemDownloadedTransactionsDir(itemName: string): string {

@@ -1,7 +1,8 @@
 import * as Plaid from "plaid"
-import {A,M} from "../index.js"
+import {A, M} from "../index.js"
 
 export interface ConfigFile {
+  dataDirectory: string
   plaidConfig: PlaidConfig
   journalConfigs: A.JournalConfig.JournalConfigsByName
   budgetConfigs: A.BudgetConfig.BudgetConfigsByName
