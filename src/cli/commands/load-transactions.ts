@@ -41,7 +41,7 @@ export default class LoadTransactions extends OC.Command {
       endDateStr == null ? defaultEndDate : new Date(Date.parse(endDateStr))
 
     return await M.App.withApp({}, async (app) => {
-      const transactions = app.loadTransactions({
+      const transactions = await app.loadTransactions({
         startDate,
         endDate,
       })

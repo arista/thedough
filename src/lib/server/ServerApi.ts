@@ -7,13 +7,14 @@ export function createServerApi({
   app: M.App
   configName: string
 }): M.IApi {
-  const {plaidApi, model} = app
+  const {model} = app
 
   function plaidLinkLinkTokenCreate(
     request: A.IApi.PlaidLinkLinkTokenCreateRequest
   ): A.IApi.Request<A.IApi.PlaidLinkLinkTokenCreateResponse> {
     return {
       response: (async () => {
+        const plaidApi = await app.plaidApi
         const plaidRequest: A.PlaidApi.CreatePlaidLinkTokenRequest = {}
         const {updateItemId} = request
         if (updateItemId != null) {
@@ -37,6 +38,7 @@ export function createServerApi({
   ): A.IApi.Request<A.IApi.PlaidLinkTokenExchangeResponse> {
     return {
       response: (async () => {
+        const plaidApi = await app.plaidApi
         const r = await plaidApi.exchangePublicToken(request)
         const {access_token, item_id} = r
         return {

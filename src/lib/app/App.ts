@@ -21,66 +21,71 @@ export class App {
     ))
   }
 
-  _configFile: M.ConfigFile | null = null
-  get configFile(): M.ConfigFile {
-    return (this._configFile ||= require(this.configFileName))
+  _configFile: Promise<M.ConfigFile> | null = null
+  get configFile(): Promise<M.ConfigFile> {
+    return (this._configFile ||= (async () =>
+      (await import(this.configFileName)).Config)())
   }
 
-  _config: M.entities.Config | null = null
-  get config(): M.entities.Config {
-    return (this._config ||= M.readConfig({
-      model: this.model,
-      configFile: this.configFile,
-    }))
+  _config: Promise<M.entities.Config> | null = null
+  get config(): Promise<M.entities.Config> {
+    return (this._config ||= (async () =>
+      M.readConfig({
+        model: this.model,
+        configFile: await this.configFile,
+      }))())
   }
 
-  _dataDirectory: string | null = null
-  get dataDirectory(): string {
-    return (this._dataDirectory ||= this.configFile.dataDirectory)
+  _dataDirectory: Promise<string> | null = null
+  get dataDirectory(): Promise<string> {
+    return (this._dataDirectory ||= (async () =>
+      (await this.configFile).dataDirectory)())
   }
 
-  _plaidConfig: M.entities.PlaidConfig | null = null
-  get plaidConfig(): M.entities.PlaidConfig {
-    return (this._plaidConfig ||= this.config.plaidConfig)
+  _plaidConfig: Promise<M.entities.PlaidConfig> | null = null
+  get plaidConfig(): Promise<M.entities.PlaidConfig> {
+    return (this._plaidConfig ||= (async () =>
+      (await this.config).plaidConfig)())
   }
 
-  _plaidApi: M.PlaidApi | null = null
-  get plaidApi(): M.PlaidApi {
-    return (this._plaidApi ||= (() => {
+  _plaidApi: Promise<M.PlaidApi> | null = null
+  get plaidApi(): Promise<M.PlaidApi> {
+    return (this._plaidApi ||= (async () => {
       const plaidConfig = this.plaidConfig
       return new M.PlaidApi({
-        config: this.plaidConfig,
+        config: await this.plaidConfig,
       })
     })())
   }
 
-  _sourceTransactionPaths: M.SourceTransactionPaths | null = null
-  get sourceTransactionPaths(): M.SourceTransactionPaths {
-    return (this._sourceTransactionPaths ||= new M.SourceTransactionPaths({
-      dataDirectory: this.dataDirectory,
-    }))
+  _sourceTransactionPaths: Promise<M.SourceTransactionPaths> | null = null
+  get sourceTransactionPaths(): Promise<M.SourceTransactionPaths> {
+    return (this._sourceTransactionPaths ||= (async () =>
+      new M.SourceTransactionPaths({
+        dataDirectory: await this.dataDirectory,
+      }))())
   }
 
-  _transactionDownloader: M.TransactionDownloader | null = null
-  get transactionDownloader(): M.TransactionDownloader {
-    return (this._transactionDownloader ||= (() => {
+  _transactionDownloader: Promise<M.TransactionDownloader> | null = null
+  get transactionDownloader(): Promise<M.TransactionDownloader> {
+    return (this._transactionDownloader ||= (async () => {
       const config = this.config
       return new M.TransactionDownloader({
-        plaidConfig: this.plaidConfig,
-        plaidApi: this.plaidApi,
-        sourceTransactionPaths: this.sourceTransactionPaths,
+        plaidConfig: await this.plaidConfig,
+        plaidApi: await this.plaidApi,
+        sourceTransactionPaths: await this.sourceTransactionPaths,
       })
     })())
   }
 
-  _sourceTransactionLoader: M.SourceTransactionLoader | null = null
-  get sourceTransactionLoader(): M.SourceTransactionLoader {
-    return (this._sourceTransactionLoader ||= (() => {
+  _sourceTransactionLoader: Promise<M.SourceTransactionLoader> | null = null
+  get sourceTransactionLoader(): Promise<M.SourceTransactionLoader> {
+    return (this._sourceTransactionLoader ||= (async () => {
       const config = this.config
       return new M.SourceTransactionLoader({
         model: this.model,
-        plaidConfig: this.plaidConfig,
-        sourceTransactionPaths: this.sourceTransactionPaths,
+        plaidConfig: await this.plaidConfig,
+        sourceTransactionPaths: await this.sourceTransactionPaths,
       })
     })())
   }
@@ -97,14 +102,15 @@ export class App {
   }
 
   async downloadTransactions() {
-    const {transactionDownloader} = this
+    const transactionDownloader = await this.transactionDownloader
     await transactionDownloader.downloadTransactions()
   }
 
   async getAccounts() {
-    const {plaidApi} = this
+    const plaidApi = await this.plaidApi
+    const plaidItems = (await this.plaidConfig).plaidItems
     const accounts = await Promise.all(
-      this.plaidConfig.plaidItems.entitiesArray.map(async (plaidItemConfig) => {
+      plaidItems.entitiesArray.map(async (plaidItemConfig) => {
         const {name} = plaidItemConfig
         const accounts = await plaidApi.getAccounts({plaidItemName: name})
         return {
@@ -132,9 +138,10 @@ export class App {
   }
 
   async getItems() {
-    const {plaidApi} = this
+    const plaidApi = await this.plaidApi
+    const plaidItems = (await this.plaidConfig).plaidItems
     const items = await Promise.all(
-      this.plaidConfig.plaidItems.entitiesArray.map(async (plaidItemConfig) => {
+      plaidItems.entitiesArray.map(async (plaidItemConfig) => {
         const {name} = plaidItemConfig
         const item = await plaidApi.getItem({plaidItemName: name})
         return {
@@ -149,28 +156,35 @@ export class App {
     }
   }
 
-  loadTransactions({
+  async loadTransactions({
     startDate,
     endDate,
   }: {
     startDate: Date
     endDate: Date
-  }): Array<M.entities.SourceTransaction> {
-    const loader = this.sourceTransactionLoader
-    loader.loadNewPlaidTransactions({startDate, endDate})
+  }): Promise<Array<M.entities.SourceTransaction>> {
+    const loader = await this.sourceTransactionLoader
+    await loader.loadNewPlaidTransactions({startDate, endDate})
     return this.model.entities.SourceTransaction.all.entitiesArray
   }
 
-  loadJournal({model, configName}: {model: M.Model; configName: string}): {
+  async loadJournal({
+    model,
+    configName,
+  }: {
+    model: M.Model
+    configName: string
+  }): Promise<{
     journalDir: string
     journalConfig: M.JournalConfig
     journalEntriesFilename: string
     classifiedTransactionsFilename: string
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     sourceTransactionsFilename: string
-  } {
+  }> {
+    const configFile = await this.configFile
     const journalConfigFn = A.Utils.notNull(
-      this.configFile.journalConfigs[configName],
+      configFile.journalConfigs[configName],
       `searching journalConfigs for "${configName}"`
     )
     const journalConfig = journalConfigFn()
@@ -178,8 +192,9 @@ export class App {
     A.Accounts.createAccounts(model, chartOfAccounts)
     A.Accounts.checkPlaidAccounts(model)
 
+    const dataDirectory = await this.dataDirectory
     const journalDir = Path.join(
-      this.dataDirectory,
+      dataDirectory,
       "journals",
       journalConfig.journalDir
     )
@@ -233,7 +248,7 @@ export class App {
     }
 
     // Add the budget entries
-    this.loadBudget({configName, model})
+    await this.loadBudget({configName, model})
 
     return {
       journalDir,
@@ -245,9 +260,10 @@ export class App {
     }
   }
 
-  loadBudget({model, configName}: {model: M.Model; configName: string}) {
+  async loadBudget({model, configName}: {model: M.Model; configName: string}) {
+    const configFile = await this.configFile
     const budgetConfigFn = A.Utils.notNull(
-      this.configFile.budgetConfigs[configName],
+      configFile.budgetConfigs[configName],
       `searching budgetConfigs for "${configName}"`
     )
     const budgetConfig = budgetConfigFn()
@@ -275,14 +291,15 @@ export class App {
       classifiedTransactionsFilename,
       classifiedTransactions,
       sourceTransactionsFilename,
-    } = this.loadJournal({model, configName})
+    } = await this.loadJournal({model, configName})
     const {startDate, endDate, classificationRules} = journalConfig
 
     console.log(`Downloading new source transactions`)
-    await this.transactionDownloader.downloadTransactions()
+    const transactionDownloader = await this.transactionDownloader
+    transactionDownloader.downloadTransactions()
 
     console.log(`Loading old and new source transactions`)
-    const newSourceTransactions = this._loadNewSourceTransactions({
+    const newSourceTransactions = await this._loadNewSourceTransactions({
       startDate,
       endDate,
       model,
@@ -377,7 +394,7 @@ export class App {
     }
 
     // Add the budget entries
-    this.loadBudget({configName, model})
+    await this.loadBudget({configName, model})
   }
 
   async unclassify({
@@ -393,7 +410,7 @@ export class App {
       journalEntriesFilename,
       classifiedTransactionsFilename,
       classifiedTransactions,
-    } = this.loadJournal({model, configName})
+    } = await this.loadJournal({model, configName})
 
     const classifiedTransactionsBySourceTransactionId = new Map<
       string,
@@ -448,7 +465,7 @@ export class App {
     )
   }
 
-  _loadNewSourceTransactions({
+  async _loadNewSourceTransactions({
     startDate,
     endDate,
     model,
@@ -456,13 +473,13 @@ export class App {
     startDate: Date
     endDate: Date
     model: M.Model
-  }): Array<A.Model.entities.SourceTransaction> {
+  }): Promise<Array<A.Model.entities.SourceTransaction>> {
     // Include transactions from the surrounding years, just in case
     // there are any that border.  Then whittle them down
     const startYear = startDate.getFullYear() - 1
     const endYear = endDate.getFullYear() + 1
-    const loader = this.sourceTransactionLoader
-    return loader.loadNewPlaidTransactions({startDate, endDate})
+    const loader = await this.sourceTransactionLoader
+    return await loader.loadNewPlaidTransactions({startDate, endDate})
   }
 
   _writeNewSourceTransactions({

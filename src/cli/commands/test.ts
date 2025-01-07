@@ -13,12 +13,13 @@ export default class Test extends OC.Command {
     const {args, flags} = await this.parse(Test)
 
     await M.App.withApp({}, async (app) => {
-      const accountsResponse = await app.plaidApi.getAccounts({
+      const plaidApi = await app.plaidApi
+      const accountsResponse = await plaidApi.getAccounts({
         plaidItemName: "wellsFargoNathan",
       })
       console.log(JSON.stringify(accountsResponse, null, 2))
 
-      const transactionsResponse = await app.plaidApi.getTransactions({
+      const transactionsResponse = await plaidApi.getTransactions({
         plaidItemName: "wellsFargoNathan",
         startDate: "2024-01-01",
         endDate: "2024-02-01",
