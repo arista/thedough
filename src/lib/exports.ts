@@ -6,9 +6,10 @@ export type {
 export type {
   BudgetConfig,
   BudgetConfigsByName,
+} from "./journal/BudgetConfig.js"
+export type {
   ScheduledEntry,
-} from "./budget/BudgetConfig.js"
-
+} from "./journal/ScheduledEntry.js"
 export type {
   ClassificationRule,
   RuleMatch,
