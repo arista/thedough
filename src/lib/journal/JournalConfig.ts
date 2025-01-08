@@ -16,6 +16,7 @@ export interface Account {
   displayName?: string
   creditOrDebit?: CreditOrDebit
   description?: string
+  balanceAsOf?: BalanceAsOf
 }
 
 export type CreditOrDebit = "credit" | "debit"
@@ -32,4 +33,15 @@ export interface ScheduledSourceTransaction {
   schedule: string
   name: string
   description: string
+}
+
+export interface BalanceAsOf {
+  date: string
+  balances: Array<Balance>
+}
+
+export interface Balance {
+  currency: string
+  actualBalanceInCents: number
+  budgetBalanceInCents: number
 }

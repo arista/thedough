@@ -56,9 +56,9 @@ export function createAccount(
   accountConfig: A.JournalConfig.Account,
   order: number
 ): A.Model.entities.Account {
-  const {id, parent, name, displayName, creditOrDebit, description} =
+  const {id, parent, name, displayName, creditOrDebit, description, balanceAsOf} =
     accountConfig
-  return model.entities.Account.add({
+  const account = model.entities.Account.add({
     id,
     parentName: parent,
     name,
@@ -67,6 +67,22 @@ export function createAccount(
     description,
     order,
   })
+
+  if (balanceAsOf != null) {
+    const {date, balances} = balanceAsOf
+    for(const balance of balances) {
+      const {currency, actualBalanceInCents, budgetBalanceInCents} = balance
+      model.entities.AccountBalanceAsOf.add({
+        date,
+        accountId: account.id,
+        currency,
+        actualBalanceInCents,
+        budgetBalanceInCents,
+      })
+    }
+  }
+  
+  return account
 }
 
 // Attempts to find an account with the given name.  It is possible

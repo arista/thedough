@@ -76,6 +76,7 @@ export function createServerApi({
         const entities = [
           ...model.entities.SourceTransaction.all.entitiesArray,
           ...model.entities.Account.all.entitiesArray,
+          ...model.entities.AccountBalanceAsOf.all.entitiesArray,
           ...model.entities.JournalEntry.all.entitiesArray,
           ...model.entities.JournalEntryAccount.all.entitiesArray,
         ]

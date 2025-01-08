@@ -39,6 +39,7 @@ export function postProcessModel({model}: {model: M.Model}) {
   addAccountEntryEntities({model})
   computeCurrentBalances({model})
   computeRunningBalances({model})
+  incorporateBalancesAsOf({model})
 }
 
 // The JournalEntries are for specific accounts, but the effects of
@@ -177,5 +178,14 @@ function getOrCreateRunningBalance(
       actualBalanceInCents: 0,
     })
     return newBalance
+  }
+}
+
+function incorporateBalancesAsOf({model}: {model: M.Model}) {
+  for(const account of model.entities.Account.all.entities) {
+    for(const balanceAsOf of account.balancesAsOf.byCurrency.entities) {
+      const {date, currency, actualBalanceInCents, budgetBalanceInCents} = balanceAsOf
+      // FIXME - implement this
+    }
   }
 }
