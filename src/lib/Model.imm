@@ -189,8 +189,8 @@ entity RunningAccountBalance {
   id: number(auto-increment)
   accountEntryId: number
   currency: string
-  actualBalanceInCents: number
-  budgetBalanceInCents: number
+  mut actualBalanceInCents: number
+  mut budgetBalanceInCents: number
 
   belongs-to accountEntry: AccountEntry whose id = accountEntryId
 }

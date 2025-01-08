@@ -185,7 +185,42 @@ function incorporateBalancesAsOf({model}: {model: M.Model}) {
   for(const account of model.entities.Account.all.entities) {
     for(const balanceAsOf of account.balancesAsOf.byCurrency.entities) {
       const {date, currency, actualBalanceInCents, budgetBalanceInCents} = balanceAsOf
-      // FIXME - implement this
+      // Get what we think the current balance is, and the difference
+      // between that and the specified balance
+      const runningBalance = getRunningBalanceAsOf({account, currency, date})
+      if (runningBalance != null) {
+        const adjustActual = actualBalanceInCents - runningBalance.actual
+        const adjustBudget = budgetBalanceInCents - runningBalance.budget
+
+        // Adjust all of the entries
+        for(const entry of account.allEntries.byDate.entities) {
+          for(const b of entry.runningBalances.byCurrency.entities) {
+            if (b.currency === currency) {
+              b.actualBalanceInCents += adjustActual
+              b.budgetBalanceInCents += adjustBudget
+            }
+          }
+        }
+      }
     }
   }
+}
+
+function getRunningBalanceAsOf({account, currency, date}: {account: A.Model.entities.Account, currency: string, date: string}):Balances|null {
+  let ret:Balances|null = null
+  let lastDate:string|null = null
+  for(const entry of account.allEntries.byDate.entities) {
+    if (entry.date < date && (lastDate == null || entry.date >= lastDate)) {
+      for(const b of entry.runningBalances.byCurrency.entities) {
+        if (b.currency === currency) {
+          ret = {
+            actual: b.actualBalanceInCents,
+            budget: b.budgetBalanceInCents,
+          }
+        }
+      }
+      lastDate = entry.date
+    }
+  }
+  return ret
 }
