@@ -69,19 +69,21 @@ export function createServerApi({
   }
 
   function modelEntityList(request: {}): A.IApi.Request<A.IApi.ModelEntityListResponse> {
-    const model = A.AppModel.createModel()
-    app.loadJournal({model, configName})
-    const entities = [
-      ...model.entities.SourceTransaction.all.entitiesArray,
-      ...model.entities.Account.all.entitiesArray,
-      ...model.entities.JournalEntry.all.entitiesArray,
-      ...model.entities.JournalEntryAccount.all.entitiesArray,
-    ]
-    const entityJsons = entities.map((e) => e.toJSON())
     return {
-      response: Promise.resolve({
-        entities: entityJsons,
-      }),
+      response: (async () => {
+        const model = A.AppModel.createModel()
+        await app.loadJournal({model, configName})
+        const entities = [
+          ...model.entities.SourceTransaction.all.entitiesArray,
+          ...model.entities.Account.all.entitiesArray,
+          ...model.entities.JournalEntry.all.entitiesArray,
+          ...model.entities.JournalEntryAccount.all.entitiesArray,
+        ]
+        const entityJsons = entities.map((e) => e.toJSON())
+        return {
+          entities: entityJsons,
+        }
+      })(),
     }
   }
 
