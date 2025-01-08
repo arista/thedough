@@ -156,7 +156,7 @@ export class App {
     }
   }
 
-  async getJournalConfig(configName: string):Promise<M.JournalConfig> {
+  async getJournalConfig(configName: string): Promise<M.JournalConfig> {
     const configFile = await this.configFile
     const journalConfigFn = A.Utils.notNull(
       configFile.journalConfigs[configName],
@@ -307,12 +307,13 @@ export class App {
       })
     }
 
-    const newScheduledSourceTransactions = await this._loadNewScheduledSourceTransactions({
-      startDate,
-      endDate,
-      model,
-      configName,
-    })
+    const newScheduledSourceTransactions =
+      await this._loadNewScheduledSourceTransactions({
+        startDate,
+        endDate,
+        model,
+        configName,
+      })
     console.log(
       `  Loaded ${newScheduledSourceTransactions.length} new scheduled source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
     )
@@ -322,7 +323,7 @@ export class App {
         sourceTransactionsFilename,
       })
     }
-    
+
     const unclassifiedTransactionsFilename = Path.join(
       journalDir,
       "forReview.csv"
@@ -515,12 +516,16 @@ export class App {
     startDate: Date
     endDate: Date
     model: M.Model
-    configName: string,
+    configName: string
   }): Promise<Array<A.Model.entities.SourceTransaction>> {
     const journalConfig = await this.getJournalConfig(configName)
-    const scheduledSourceTransactions = journalConfig.scheduledSourceTransactions ?? []
+    const scheduledSourceTransactions =
+      journalConfig.scheduledSourceTransactions ?? []
     const loader = await this.sourceTransactionLoader
-    return await loader.loadNewScheduledSourceTransactions({startDate, endDate}, scheduledSourceTransactions)
+    return await loader.loadNewScheduledSourceTransactions(
+      {startDate, endDate},
+      scheduledSourceTransactions
+    )
   }
 
   _loadJournalEntries({

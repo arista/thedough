@@ -3,13 +3,8 @@ export type {
   JournalConfig,
   JournalConfigsByName,
 } from "./journal/JournalConfig.js"
-export type {
-  BudgetConfig,
-  BudgetConfigsByName,
-} from "./journal/BudgetConfig.js"
-export type {
-  ScheduledEntry,
-} from "./journal/ScheduledEntry.js"
+export type {BudgetConfig, BudgetConfigsByName} from "./journal/BudgetConfig.js"
+export type {ScheduledEntry} from "./journal/ScheduledEntry.js"
 export type {
   ClassificationRule,
   RuleMatch,

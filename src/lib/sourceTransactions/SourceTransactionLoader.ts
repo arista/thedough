@@ -135,9 +135,9 @@ export class SourceTransactionLoader {
     loadSpec: LoadSpec,
     scheduledSourceTransactions: Array<A.JournalConfig.ScheduledSourceTransaction>
   ): Array<A.Model.entities.SourceTransaction> {
-    const ret:Array<A.Model.entities.SourceTransaction> = []
+    const ret: Array<A.Model.entities.SourceTransaction> = []
     const {startDate, endDate} = loadSpec
-    for(const entry of scheduledSourceTransactions) {
+    for (const entry of scheduledSourceTransactions) {
       const {schedule, name, description} = entry
       const sched = later.parse.text(schedule)
       const {exceptions, error} = sched
@@ -155,17 +155,21 @@ export class SourceTransactionLoader {
           const instance = instances[i]
           const entryDate = A.DateUtils.toYYYY_MM_DD(instance)
           const transactionId = `scheduled-${entry.id}-${entryDate}`
-          if (!this.props.model.entities.SourceTransaction.byTransactionId.hasKey(transactionId)) {
-          const transaction =
+          if (
+            !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
+              transactionId
+            )
+          ) {
+            const transaction =
               this.props.model.entities.ScheduledTransaction.add({
-              transactionId,
-              accountName: entry.account,
-              date: entryDate,
-              amountInCents: entry.amountInCents,
-              currency: entry.currency ?? "USD",
-              name,
-              description,
-            })
+                transactionId,
+                accountName: entry.account,
+                date: entryDate,
+                amountInCents: entry.amountInCents,
+                currency: entry.currency ?? "USD",
+                name,
+                description,
+              })
             ret.push(transaction)
           }
         }

@@ -27,4 +27,3 @@ export * as ScheduledEntry from "./journal/ScheduledEntry.js"
 export * as Classification from "./journal/Classification.js"
 export * as ClassificationRule from "./journal/ClassificationRule.js"
 export type * as IApi from "./server/IApi.js"
-
