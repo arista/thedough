@@ -288,7 +288,7 @@ export class AccountEntry {
       .filter((ojea) => ojea.account !== a)
       .map((ojea) => ojea.account.name)
       .join(", ")
-    const entryId = `${id}-${a.id}`
+    const entryId = a.id
     const actualBalances =
       ae == null
         ? []
