@@ -492,6 +492,7 @@ export class App {
     const str =
       newSourceTransactions.map((t) => JSON.stringify(t.toJSON())).join("\n") +
       "\n"
+    fs.mkdirSync(Path.dirname(sourceTransactionsFilename), {recursive: true})
     fs.writeFileSync(sourceTransactionsFilename, str, {flag: "a"})
     console.log(
       `  Wrote ${newSourceTransactions.length} new SourceTransactions to ${sourceTransactionsFilename}`

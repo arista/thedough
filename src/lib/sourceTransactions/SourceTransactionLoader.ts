@@ -42,6 +42,7 @@ export class SourceTransactionLoader {
         ),
         "byEndingYear"
       )
+      fs.mkdirSync(dir, {recursive: true})
       for (const dirent of fs.readdirSync(dir, {withFileTypes: true})) {
         if (dirent.isDirectory()) {
           const year = parseInt(dirent.name)
