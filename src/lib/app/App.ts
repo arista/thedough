@@ -324,6 +324,23 @@ export class App {
       })
     }
 
+    const newEversourceSourceTransactions =
+      await this._loadNewEversourceSourceTransactions({
+        startDate,
+        endDate,
+        model,
+        configName,
+      })
+    console.log(
+      `  Loaded ${newEversourceSourceTransactions.length} new eversource source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
+    )
+    if (newEversourceSourceTransactions.length > 0) {
+      this._writeNewSourceTransactions({
+        newSourceTransactions: newEversourceSourceTransactions,
+        sourceTransactionsFilename,
+      })
+    }
+
     const unclassifiedTransactionsFilename = Path.join(
       journalDir,
       "forReview.csv"
@@ -525,6 +542,24 @@ export class App {
     return await loader.loadNewScheduledSourceTransactions(
       {startDate, endDate},
       scheduledSourceTransactions
+    )
+  }
+
+  async _loadNewEversourceSourceTransactions({
+    startDate,
+    endDate,
+    model,
+    configName,
+  }: {
+    startDate: Date
+    endDate: Date
+    model: M.Model
+    configName: string
+  }): Promise<Array<A.Model.entities.SourceTransaction>> {
+    const journalConfig = await this.getJournalConfig(configName)
+    const loader = await this.sourceTransactionLoader
+    return await loader.loadNewEversourceSourceTransactions(
+      {startDate, endDate},
     )
   }
 

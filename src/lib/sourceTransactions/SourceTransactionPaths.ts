@@ -12,4 +12,8 @@ export class SourceTransactionPaths {
   getPlaidItemDownloadedTransactionsDir(itemName: string): string {
     return Path.join(this.downloadedTransactionsBaseDir, "plaidItems", itemName)
   }
+
+  getEversourceDownloadedTransactionsDir(): string {
+    return Path.join(this.downloadedTransactionsBaseDir, "eversource")
+  }
 }
