@@ -56,8 +56,15 @@ export function createAccount(
   accountConfig: A.JournalConfig.Account,
   order: number
 ): A.Model.entities.Account {
-  const {id, parent, name, displayName, creditOrDebit, description, balanceAsOf} =
-    accountConfig
+  const {
+    id,
+    parent,
+    name,
+    displayName,
+    creditOrDebit,
+    description,
+    balanceAsOf,
+  } = accountConfig
   const account = model.entities.Account.add({
     id,
     parentName: parent,
@@ -70,7 +77,7 @@ export function createAccount(
 
   if (balanceAsOf != null) {
     const {date, balances} = balanceAsOf
-    for(const balance of balances) {
+    for (const balance of balances) {
       const {currency, actualBalanceInCents, budgetBalanceInCents} = balance
       model.entities.AccountBalanceAsOf.add({
         date,
@@ -81,7 +88,7 @@ export function createAccount(
       })
     }
   }
-  
+
   return account
 }
 
