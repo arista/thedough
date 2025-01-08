@@ -156,16 +156,14 @@ export class App {
     }
   }
 
-  async loadTransactions({
-    startDate,
-    endDate,
-  }: {
-    startDate: Date
-    endDate: Date
-  }): Promise<Array<M.entities.SourceTransaction>> {
-    const loader = await this.sourceTransactionLoader
-    await loader.loadNewPlaidTransactions({startDate, endDate})
-    return this.model.entities.SourceTransaction.all.entitiesArray
+  async getJournalConfig(configName: string):Promise<M.JournalConfig> {
+    const configFile = await this.configFile
+    const journalConfigFn = A.Utils.notNull(
+      configFile.journalConfigs[configName],
+      `searching journalConfigs for "${configName}"`
+    )
+    const journalConfig = journalConfigFn()
+    return journalConfig
   }
 
   async loadJournal({
@@ -182,12 +180,7 @@ export class App {
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     sourceTransactionsFilename: string
   }> {
-    const configFile = await this.configFile
-    const journalConfigFn = A.Utils.notNull(
-      configFile.journalConfigs[configName],
-      `searching journalConfigs for "${configName}"`
-    )
-    const journalConfig = journalConfigFn()
+    const journalConfig = await this.getJournalConfig(configName)
     const {startDate, endDate, chartOfAccounts} = journalConfig
     A.Accounts.createAccounts(model, chartOfAccounts)
     A.Accounts.checkPlaidAccounts(model)
@@ -307,11 +300,29 @@ export class App {
     console.log(
       `  Loaded ${newSourceTransactions.length} new source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
     )
-    this._writeNewSourceTransactions({
-      newSourceTransactions,
-      sourceTransactionsFilename,
-    })
+    if (newSourceTransactions.length > 0) {
+      this._writeNewSourceTransactions({
+        newSourceTransactions,
+        sourceTransactionsFilename,
+      })
+    }
 
+    const newScheduledSourceTransactions = await this._loadNewScheduledSourceTransactions({
+      startDate,
+      endDate,
+      model,
+      configName,
+    })
+    console.log(
+      `  Loaded ${newScheduledSourceTransactions.length} new scheduled source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
+    )
+    if (newScheduledSourceTransactions.length > 0) {
+      this._writeNewSourceTransactions({
+        newSourceTransactions: newScheduledSourceTransactions,
+        sourceTransactionsFilename,
+      })
+    }
+    
     const unclassifiedTransactionsFilename = Path.join(
       journalDir,
       "forReview.csv"
@@ -474,10 +485,6 @@ export class App {
     endDate: Date
     model: M.Model
   }): Promise<Array<A.Model.entities.SourceTransaction>> {
-    // Include transactions from the surrounding years, just in case
-    // there are any that border.  Then whittle them down
-    const startYear = startDate.getFullYear() - 1
-    const endYear = endDate.getFullYear() + 1
     const loader = await this.sourceTransactionLoader
     return await loader.loadNewPlaidTransactions({startDate, endDate})
   }
@@ -497,6 +504,23 @@ export class App {
     console.log(
       `  Wrote ${newSourceTransactions.length} new SourceTransactions to ${sourceTransactionsFilename}`
     )
+  }
+
+  async _loadNewScheduledSourceTransactions({
+    startDate,
+    endDate,
+    model,
+    configName,
+  }: {
+    startDate: Date
+    endDate: Date
+    model: M.Model
+    configName: string,
+  }): Promise<Array<A.Model.entities.SourceTransaction>> {
+    const journalConfig = await this.getJournalConfig(configName)
+    const scheduledSourceTransactions = journalConfig.scheduledSourceTransactions ?? []
+    const loader = await this.sourceTransactionLoader
+    return await loader.loadNewScheduledSourceTransactions({startDate, endDate}, scheduledSourceTransactions)
   }
 
   _loadJournalEntries({

@@ -72,6 +72,10 @@ entity PlaidTransaction extends SourceTransaction {
   plaidTransaction: Plaid.Transaction
 }
 
+entity ScheduledTransaction extends SourceTransaction {
+  index byScheduledTransactionTransactionId: HashMap(unique) by (transactionId)
+}
+
 entity Account {
   id: string
   mut parentAccountId?: string

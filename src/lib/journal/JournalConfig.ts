@@ -5,7 +5,7 @@ export interface JournalConfig {
   endDate: Date
   journalDir: string
   chartOfAccounts: Array<Account>
-  scheduledEntries?: Array<A.ScheduledEntry.ScheduledEntry>
+  scheduledSourceTransactions?: Array<ScheduledSourceTransaction>
   classificationRules: Array<M.ClassificationRule>
 }
 
@@ -22,3 +22,14 @@ export type CreditOrDebit = "credit" | "debit"
 export type BudgetOrActual = "budget" | "actual"
 
 export type JournalConfigsByName = {[name: string]: () => JournalConfig}
+
+export interface ScheduledSourceTransaction {
+  type: "ScheduledSourceTransction"
+  id: string
+  account: string
+  amountInCents: number
+  currency?: string
+  schedule: string
+  name: string
+  description: string
+}
