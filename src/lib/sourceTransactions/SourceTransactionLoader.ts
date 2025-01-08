@@ -218,26 +218,46 @@ export class SourceTransactionLoader {
     filename: string,
     results: Array<A.Model.entities.SourceTransaction>
   ) {
-    console.log(`filename: ${filename}`)
     const csv = fs.readFileSync(filename)
     const rows = await neatCsv(csv)
     for(const row of rows) {
       const accountFullName = A.Utils.notNull(row["Account# or Nickname"])
       const accountType = A.Utils.notNull(row["Account Type"])
       const dateStr = A.Utils.notNull(row["Pay/Due Date"])
+      const type = A.Utils.notNull(row["Type"])
       const amountStr = A.Utils.notNull(row["Amount"])
       const accountParts = A.Utils.notNull(accountFullName.match(EVERSOURCE_ACCOUNT_NAME_RE))
       const accountNumber = A.Utils.notNull(accountParts[1])
       const accountName = A.Utils.notNull(accountParts[2])
       const dateParts = A.Utils.notNull(dateStr.match(EVERSOURCE_DATE_RE))
-      const year = parseInt(dateParts[1])
-      const month = parseInt(dateParts[2])
-      const day = parseInt(dateParts[3])
+      const year = dateParts[1]
+      const month = dateParts[2]
+      const day = dateParts[3]
       const amountParts = A.Utils.notNull(amountStr.match(EVERSOURCE_AMOUNT_RE))
       const amountInCents = Math.floor((parseFloat(amountParts[1]) * 100) + 0.5)
-      console.log(JSON.stringify({accountNumber, accountName, accountType, dateStr, year, month, day, amountStr, amountInCents}))
+
+      if (type === "Current Bill") {
+        const description = `Eversource ${accountType} ${accountNumber} (${accountName})`
+        const transactionId = `Eversource-${accountNumber}-${accountType}-${year}${month}${day}`
+        if (
+          !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
+            transactionId
+          )
+        ) {
+          const transaction =
+            this.props.model.entities.EversourceTransaction.add({
+              transactionId,
+              accountName: "Abramsons/Eversource Payments",
+              date: `${year}-${month}-${day}`,
+              amountInCents: amountInCents,
+              currency: "USD",
+              name: `Eversource charge`,
+              description,
+            })
+          results.push(transaction)
+        }
+      }
     }
-//    console.log(JSON.stringify(rows, null, 2))
   }
 }
 
