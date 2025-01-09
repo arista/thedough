@@ -8,10 +8,14 @@ export function writeUnclassifiedTransactions({
   filename,
   transactions,
   classificationRules,
+  startDate,
+  endDate,
 }: {
   filename: string
   transactions: Array<M.entities.SourceTransaction>
   classificationRules: Array<M.ClassificationRule>
+  startDate: Date
+  endDate: Date
 }): Array<A.Classification.UnclassifiedTransaction> {
   fs.mkdirSync(Path.dirname(filename), {recursive: true})
   const fd = fs.openSync(filename, "w")
@@ -27,16 +31,18 @@ export function writeUnclassifiedTransactions({
     )
     fs.writeSync(fd, "\n")
 
-    const data: Array<A.Classification.UnclassifiedTransaction> =
-      transactions.map((t) => {
-        const classifiedTransaction =
-          A.ClassificationRule.applyClassificationRules(t, classificationRules)
-        const suggestedClassification =
-          classifiedTransaction != null
-            ? A.Classification.stringifyClassification(classifiedTransaction)
-            : ""
+    const data: Array<A.Classification.UnclassifiedTransaction> = []
+    for (const t of transactions) {
+      const classifiedTransaction =
+        A.ClassificationRule.applyClassificationRules(t, classificationRules)
+      const suggestedClassification =
+        classifiedTransaction != null
+          ? A.Classification.stringifyClassification(classifiedTransaction)
+          : ""
 
-        return {
+      const d = new Date(Date.parse(t.date))
+      if (d >= startDate && d < endDate) {
+        const ut: A.Classification.UnclassifiedTransaction = {
           approved: "",
           date: t.date,
           amount: `${A.Utils.toCurrency(t.amountInCents, t.currency)} (${t.currency})`,
@@ -47,7 +53,9 @@ export function writeUnclassifiedTransactions({
           suggestedCategory: t.suggestedCategory ?? "",
           suggestedClassification,
         }
-      })
+        data.push(ut)
+      }
+    }
     const sortedTransactions = data.sort((t1, t2) =>
       compareUnclassifiedTransactions(t1, t2)
     )

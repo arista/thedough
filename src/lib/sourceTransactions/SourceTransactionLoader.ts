@@ -206,6 +206,7 @@ export class SourceTransactionLoader {
               const filename = Path.join(yearDir, dirent.name)
               await this._loadNewEversourceSourceTransactionsFromFile(
                 filename,
+                loadSpec,
                 ret
               )
             }
@@ -219,8 +220,10 @@ export class SourceTransactionLoader {
 
   async _loadNewEversourceSourceTransactionsFromFile(
     filename: string,
+    loadSpec: LoadSpec,
     results: Array<A.Model.entities.SourceTransaction>
   ) {
+    const {startDate, endDate} = loadSpec
     const csv = fs.readFileSync(filename)
     const rows = await neatCsv(csv)
     for (const row of rows) {
@@ -240,11 +243,15 @@ export class SourceTransactionLoader {
       const day = dateParts[3]
       const amountParts = A.Utils.notNull(amountStr.match(EVERSOURCE_AMOUNT_RE))
       const amountInCents = Math.floor(parseFloat(amountParts[1]) * 100 + 0.5)
+      const dateVal = `${year}-${month}-${day}`
+      const d = new Date(Date.parse(dateVal))
 
       if (type === "Current Bill") {
         const description = `Eversource ${accountType} ${accountNumber} (${accountName})`
         const transactionId = `Eversource-${accountNumber}-${accountType}-${year}${month}${day}`
         if (
+          d >= startDate &&
+          d < endDate &&
           !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
             transactionId
           )
@@ -253,7 +260,7 @@ export class SourceTransactionLoader {
             this.props.model.entities.EversourceTransaction.add({
               transactionId,
               accountName: "Abramsons/Eversource Payments",
-              date: `${year}-${month}-${day}`,
+              date: dateVal,
               amountInCents: amountInCents,
               currency: "USD",
               name: `Eversource charge`,
@@ -290,7 +297,11 @@ export class SourceTransactionLoader {
           })) {
             if (dirent.isFile() && dirent.name.endsWith(".json")) {
               const filename = Path.join(yearDir, dirent.name)
-              await this._loadNewManualSourceTransactionsFromFile(filename, ret)
+              await this._loadNewManualSourceTransactionsFromFile(
+                filename,
+                loadSpec,
+                ret
+              )
             }
           }
         }
@@ -302,14 +313,19 @@ export class SourceTransactionLoader {
 
   async _loadNewManualSourceTransactionsFromFile(
     filename: string,
+    loadSpec: LoadSpec,
     results: Array<A.Model.entities.SourceTransaction>
   ) {
+    const {startDate, endDate} = loadSpec
     const json = fs.readFileSync(filename).toString()
     const items: Array<A.Model.ModelEntityJson> = JSON.parse(json)
     for (const item of items) {
       if (item["@type"] === "ManualTransaction") {
         const {transactionId} = item
+        const date = new Date(Date.parse(item.date))
         if (
+          date >= startDate &&
+          date < endDate &&
           !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
             transactionId
           )

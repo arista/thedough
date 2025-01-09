@@ -372,6 +372,8 @@ export class App {
         classifiedTransactions,
         journalEntriesFilename,
         model,
+        startDate,
+        endDate,
       })
     if (missedJournalEntries.length > 0) {
       console.log(
@@ -405,6 +407,8 @@ export class App {
         classifiedTransactions: newlyClassifiedTransactions,
         journalEntriesFilename,
         model,
+        startDate,
+        endDate,
       })
     if (newJournalEntries.length > 0) {
       console.log(
@@ -430,13 +434,15 @@ export class App {
       filename: forReviewFilename,
       transactions: unclassifiedTransactions,
       classificationRules,
+      startDate,
+      endDate,
     })
     const suggestionCount = unclassified.filter(
       (t) => t.suggestedClassification != ""
     ).length
-    if (unclassifiedTransactions.length > 0) {
+    if (unclassified.length > 0) {
       console.log(
-        `Wrote ${unclassifiedTransactions.length} unclassified transaction(s) to ${forReviewFilename}`
+        `Wrote ${unclassified.length} unclassified transaction(s) to ${forReviewFilename}`
       )
       console.log(`  Suggested ${suggestionCount} classification(s)`)
     } else {
@@ -658,16 +664,22 @@ export class App {
     classifiedTransactions,
     journalEntriesFilename,
     model,
+    startDate,
+    endDate,
   }: {
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     journalEntriesFilename: string
     model: M.Model
+    startDate: Date
+    endDate: Date
   }): Array<A.Journal.JournalEntry> {
     const ret: Array<A.Journal.JournalEntry> = []
     for (const t of classifiedTransactions) {
       const journalEntry = A.Classification.classifiedTransactionToJournalEntry(
         model,
-        t
+        t,
+        startDate,
+        endDate
       )
       if (journalEntry != null) {
         ret.push(journalEntry)

@@ -77,7 +77,9 @@ const ACCOUNT_CLASSIFICATION_RE =
 
 export function classifiedTransactionToJournalEntry(
   model: M.Model,
-  t: ClassifiedTransaction
+  t: ClassifiedTransaction,
+  startDate: Date,
+  endDate: Date
 ): A.Journal.JournalEntry | null {
   const {createdAt, sourceTransactionId, classification} = t
   // Skip if the source transaction already has a journal entry
@@ -91,6 +93,12 @@ export function classifiedTransactionToJournalEntry(
   const sourceTransaction =
     model.entities.SourceTransaction.byTransactionId.get(sourceTransactionId)
   const {accountName, date, currency, amountInCents} = sourceTransaction
+
+  // Make sure the source transaction falls within the date range
+  const d = new Date(Date.parse(date))
+  if (d < startDate || d >= endDate) {
+    return null
+  }
 
   switch (classification.type) {
     case "Account": {
