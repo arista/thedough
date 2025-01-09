@@ -76,6 +76,10 @@ entity ScheduledTransaction extends SourceTransaction {
   index byScheduledTransactionTransactionId: HashMap(unique) by (transactionId)
 }
 
+entity EversourceTransaction extends SourceTransaction {
+  index byEversourceTransactionId: HashMap(unique) by (transactionId)
+}
+
 entity Account {
   id: string
   mut parentAccountId?: string

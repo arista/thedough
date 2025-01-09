@@ -3,6 +3,7 @@ import * as Plaid from "plaid"
 import fs from "node:fs"
 import Path from "node:path"
 import later from "@breejs/later"
+import neatCsv from "neat-csv"
 
 export class SourceTransactionLoader {
   constructor(
@@ -177,9 +178,94 @@ export class SourceTransactionLoader {
     }
     return ret
   }
+
+  async loadNewEversourceSourceTransactions(
+    loadSpec: LoadSpec,
+  ): Promise<Array<A.Model.entities.SourceTransaction>> {
+    const ret: Array<A.Model.entities.SourceTransaction> = []
+    // Load all transactions from the adjacent years, just in case
+    // there are any that were not downloaded during the exact year
+    const {startDate, endDate} = loadSpec
+    const startYear = loadSpec.startDate.getFullYear() - 1
+    const endYear = loadSpec.endDate.getFullYear() + 1
+
+    const dir = Path.join(
+      this.props.sourceTransactionPaths.getEversourceDownloadedTransactionsDir(),
+      "byEndingYear"
+    )
+    fs.mkdirSync(dir, {recursive: true})
+    for (const dirent of fs.readdirSync(dir, {withFileTypes: true})) {
+      if (dirent.isDirectory()) {
+        const year = parseInt(dirent.name)
+        if (!isNaN(year) && year >= startYear && year <= endYear) {
+          const yearDir = Path.join(dir, dirent.name)
+          for (const dirent of fs.readdirSync(yearDir, {
+            withFileTypes: true,
+          })) {
+            if (dirent.isFile()) {
+              const filename = Path.join(yearDir, dirent.name)
+              await this._loadNewEversourceSourceTransactionsFromFile(filename, ret)
+            }
+          }
+        }
+      }
+    }
+
+    return ret
+  }
+
+  async _loadNewEversourceSourceTransactionsFromFile(
+    filename: string,
+    results: Array<A.Model.entities.SourceTransaction>
+  ) {
+    const csv = fs.readFileSync(filename)
+    const rows = await neatCsv(csv)
+    for(const row of rows) {
+      const accountFullName = A.Utils.notNull(row["Account# or Nickname"])
+      const accountType = A.Utils.notNull(row["Account Type"])
+      const dateStr = A.Utils.notNull(row["Pay/Due Date"])
+      const type = A.Utils.notNull(row["Type"])
+      const amountStr = A.Utils.notNull(row["Amount"])
+      const accountParts = A.Utils.notNull(accountFullName.match(EVERSOURCE_ACCOUNT_NAME_RE))
+      const accountNumber = A.Utils.notNull(accountParts[1])
+      const accountName = A.Utils.notNull(accountParts[2])
+      const dateParts = A.Utils.notNull(dateStr.match(EVERSOURCE_DATE_RE))
+      const year = dateParts[1]
+      const month = dateParts[2]
+      const day = dateParts[3]
+      const amountParts = A.Utils.notNull(amountStr.match(EVERSOURCE_AMOUNT_RE))
+      const amountInCents = Math.floor((parseFloat(amountParts[1]) * 100) + 0.5)
+
+      if (type === "Current Bill") {
+        const description = `Eversource ${accountType} ${accountNumber} (${accountName})`
+        const transactionId = `Eversource-${accountNumber}-${accountType}-${year}${month}${day}`
+        if (
+          !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
+            transactionId
+          )
+        ) {
+          const transaction =
+            this.props.model.entities.EversourceTransaction.add({
+              transactionId,
+              accountName: "Abramsons/Eversource Payments",
+              date: `${year}-${month}-${day}`,
+              amountInCents: amountInCents,
+              currency: "USD",
+              name: `Eversource charge`,
+              description,
+            })
+          results.push(transaction)
+        }
+      }
+    }
+  }
 }
 
 export interface LoadSpec {
   startDate: Date
   endDate: Date
 }
+
+const EVERSOURCE_ACCOUNT_NAME_RE = /^(\d+)&lt;br&gt;\((.*)\)$/
+const EVERSOURCE_DATE_RE = /^(\d+)\/(\d+)\/(\d+)$/
+const EVERSOURCE_AMOUNT_RE = /^\$([+-\d\.]+)$/

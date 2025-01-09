@@ -69,6 +69,7 @@
     "express": "^4.21.1",
     "immodel-ts-runtime": "file:../immodel-ts/immodel-ts-runtime",
     "live-value": "^0.0.7",
+    "neat-csv": "^7.0.0",
     "pkg-dir": "^8.0.0",
     "plaid": "^30.0.0",
     "react": "^18.3.1",
