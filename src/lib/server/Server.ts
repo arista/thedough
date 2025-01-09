@@ -72,7 +72,7 @@ export class Server {
     const pathToRoot = getPathToRoot(req.path)
     const page = `<html>
   <head>
-    <script language="javascript">const pathToRoot = "${pathToRoot}";</script>
+    <script language="javascript">const PATH_TO_WEB_ROOT = "${pathToRoot}";</script>
     <script language="javascript" src="${pathToRoot}js/webapp.js"></script>
     <link rel="stylesheet" href="${pathToRoot}styles/webapp.css">
   </head>

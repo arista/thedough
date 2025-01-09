@@ -2,13 +2,17 @@ import {A, M} from "../lib/index.js"
 import * as R from "react"
 import * as RR from "react-router-dom"
 import * as V from "./views.js"
-import {createApi} from "./ClientApi.js"
+import {ClientApi} from "./ClientApi.js"
+
+// This is generated directly into the page by Server.js
+declare const PATH_TO_WEB_ROOT: string
 
 export class Webapp {
   constructor(props: {}) {}
 
   router = this.createRouter()
-  api = createApi()
+  clientApi = new ClientApi({pathToWebRoot: PATH_TO_WEB_ROOT})
+  api = this.clientApi.createApi()
 
   createRouter() {
     return RR.createBrowserRouter([
@@ -23,6 +27,10 @@ export class Webapp {
           },
           {
             path: "journal",
+            element: <V.JournalPage />,
+          },
+          {
+            path: "journal/accounts/:accountName",
             element: <V.JournalPage />,
           },
         ],

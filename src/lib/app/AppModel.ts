@@ -204,7 +204,7 @@ function incorporateBalancesAsOf({model}: {model: M.Model}) {
         }
 
         // Adjust the account's current balance
-        for(const b of account.currentBalances.byCurrency.entities) {
+        for (const b of account.currentBalances.byCurrency.entities) {
           if (b.currency === currency) {
             b.actualBalanceInCents += adjustActual
             b.budgetBalanceInCents += adjustBudget

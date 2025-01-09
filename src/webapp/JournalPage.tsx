@@ -11,6 +11,9 @@ export const JournalPage = () => {
   const [model, setModel] = R.useState<M.Model | null>(null)
   const [journal, setJournal] = R.useState<VM.Journal | null>(null)
 
+  // Get any URL parameters
+  const params = RR.useParams()
+
   R.useEffect(() => {
     ;(async () => {
       // Load the model from the server
@@ -20,6 +23,10 @@ export const JournalPage = () => {
       setModel(model)
       const journal = VM.Journal.fromModel(model)
       setJournal(journal)
+
+      if (params.accountName != null) {
+        journal.openAccountWithName(params.accountName)
+      }
     })()
   }, [])
 
