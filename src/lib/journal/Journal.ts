@@ -28,37 +28,57 @@ export interface JournalEntryAccount {
   amountInCents: number
 }
 
-export function addJournalEntries(
-  model: M.Model,
+export function addJournalEntries({
+  model,
+  entries,
+  startDate,
+  endDate,
+}: {
+  model: M.Model
   entries: Array<JournalEntryLine>
-) {
+  startDate: Date
+  endDate: Date
+}) {
   for (const entry of entries) {
-    addJournalEntry(model, entry)
+    addJournalEntry({model, entry, startDate, endDate})
   }
 }
 
-export function addJournalEntry(model: M.Model, entry: JournalEntryLine) {
+export function addJournalEntry({
+  model,
+  entry,
+  startDate,
+  endDate,
+}: {
+  model: M.Model
+  entry: JournalEntryLine
+  startDate: Date
+  endDate: Date
+}) {
   switch (entry.type) {
     case "JournalEntry": {
       const {id, createdAt, date, memo, sourceTransactionId, accounts} = entry
-      const journalEntry = model.entities.JournalEntry.add({
-        id,
-        date,
-        memo,
-        sourceTransactionId,
-        budgetOrActual: "actual",
-        createdAt: new Date(Date.parse(date)).toISOString(),
-      })
-      for (const journalEntryAccount of accounts) {
-        const {accountId, creditOrDebit, amountInCents, currency} =
-          journalEntryAccount
-        const accountEntry = model.entities.JournalEntryAccount.add({
-          journalEntryId: journalEntry.id,
-          accountId,
-          creditOrDebit,
-          currency,
-          amountInCents,
+      const d = new Date(Date.parse(date))
+      if (d >= startDate && d < endDate) {
+        const journalEntry = model.entities.JournalEntry.add({
+          id,
+          date,
+          memo,
+          sourceTransactionId,
+          budgetOrActual: "actual",
+          createdAt: new Date(Date.parse(date)).toISOString(),
         })
+        for (const journalEntryAccount of accounts) {
+          const {accountId, creditOrDebit, amountInCents, currency} =
+            journalEntryAccount
+          const accountEntry = model.entities.JournalEntryAccount.add({
+            journalEntryId: journalEntry.id,
+            accountId,
+            creditOrDebit,
+            currency,
+            amountInCents,
+          })
+        }
       }
       break
     }

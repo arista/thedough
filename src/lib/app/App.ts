@@ -201,6 +201,8 @@ export class App {
     this._addJournalEntries({
       journalEntries: existingJournalEntries,
       model,
+      startDate,
+      endDate,
     })
     if (existingJournalEntries.length > 0) {
       console.log(
@@ -379,6 +381,8 @@ export class App {
     this._addJournalEntries({
       journalEntries: missedJournalEntries,
       model,
+      startDate,
+      endDate,
     })
 
     // Check the "forReview" file to see if any classifications have
@@ -410,6 +414,8 @@ export class App {
     this._addJournalEntries({
       journalEntries: newJournalEntries,
       model,
+      startDate,
+      endDate,
     })
 
     // Put together the list of transactions that still need to be
@@ -630,11 +636,20 @@ export class App {
   _addJournalEntries({
     journalEntries,
     model,
+    startDate,
+    endDate,
   }: {
     journalEntries: Array<A.Journal.JournalEntryLine>
     model: M.Model
+    startDate: Date
+    endDate: Date
   }) {
-    A.Journal.addJournalEntries(model, journalEntries)
+    A.Journal.addJournalEntries({
+      model,
+      entries: journalEntries,
+      startDate,
+      endDate,
+    })
   }
 
   // See if there are any classified transactions that haven't yet
