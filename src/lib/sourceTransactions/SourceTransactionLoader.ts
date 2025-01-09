@@ -180,7 +180,7 @@ export class SourceTransactionLoader {
   }
 
   async loadNewEversourceSourceTransactions(
-    loadSpec: LoadSpec,
+    loadSpec: LoadSpec
   ): Promise<Array<A.Model.entities.SourceTransaction>> {
     const ret: Array<A.Model.entities.SourceTransaction> = []
     // Load all transactions from the adjacent years, just in case
@@ -202,9 +202,12 @@ export class SourceTransactionLoader {
           for (const dirent of fs.readdirSync(yearDir, {
             withFileTypes: true,
           })) {
-            if (dirent.isFile()) {
+            if (dirent.isFile() && dirent.name.endsWith(".csv")) {
               const filename = Path.join(yearDir, dirent.name)
-              await this._loadNewEversourceSourceTransactionsFromFile(filename, ret)
+              await this._loadNewEversourceSourceTransactionsFromFile(
+                filename,
+                ret
+              )
             }
           }
         }
@@ -220,13 +223,15 @@ export class SourceTransactionLoader {
   ) {
     const csv = fs.readFileSync(filename)
     const rows = await neatCsv(csv)
-    for(const row of rows) {
+    for (const row of rows) {
       const accountFullName = A.Utils.notNull(row["Account# or Nickname"])
       const accountType = A.Utils.notNull(row["Account Type"])
       const dateStr = A.Utils.notNull(row["Pay/Due Date"])
       const type = A.Utils.notNull(row["Type"])
       const amountStr = A.Utils.notNull(row["Amount"])
-      const accountParts = A.Utils.notNull(accountFullName.match(EVERSOURCE_ACCOUNT_NAME_RE))
+      const accountParts = A.Utils.notNull(
+        accountFullName.match(EVERSOURCE_ACCOUNT_NAME_RE)
+      )
       const accountNumber = A.Utils.notNull(accountParts[1])
       const accountName = A.Utils.notNull(accountParts[2])
       const dateParts = A.Utils.notNull(dateStr.match(EVERSOURCE_DATE_RE))
@@ -234,7 +239,7 @@ export class SourceTransactionLoader {
       const month = dateParts[2]
       const day = dateParts[3]
       const amountParts = A.Utils.notNull(amountStr.match(EVERSOURCE_AMOUNT_RE))
-      const amountInCents = Math.floor((parseFloat(amountParts[1]) * 100) + 0.5)
+      const amountInCents = Math.floor(parseFloat(amountParts[1]) * 100 + 0.5)
 
       if (type === "Current Bill") {
         const description = `Eversource ${accountType} ${accountNumber} (${accountName})`
@@ -254,6 +259,63 @@ export class SourceTransactionLoader {
               name: `Eversource charge`,
               description,
             })
+          results.push(transaction)
+        }
+      }
+    }
+  }
+
+  async loadNewManualSourceTransactions(
+    loadSpec: LoadSpec
+  ): Promise<Array<A.Model.entities.SourceTransaction>> {
+    const ret: Array<A.Model.entities.SourceTransaction> = []
+    // Load all transactions from the adjacent years, just in case
+    // there are any that were not downloaded during the exact year
+    const {startDate, endDate} = loadSpec
+    const startYear = loadSpec.startDate.getFullYear() - 1
+    const endYear = loadSpec.endDate.getFullYear() + 1
+
+    const dir = Path.join(
+      this.props.sourceTransactionPaths.getManualTransactionsDir(),
+      "byEndingYear"
+    )
+    fs.mkdirSync(dir, {recursive: true})
+    for (const dirent of fs.readdirSync(dir, {withFileTypes: true})) {
+      if (dirent.isDirectory()) {
+        const year = parseInt(dirent.name)
+        if (!isNaN(year) && year >= startYear && year <= endYear) {
+          const yearDir = Path.join(dir, dirent.name)
+          for (const dirent of fs.readdirSync(yearDir, {
+            withFileTypes: true,
+          })) {
+            if (dirent.isFile() && dirent.name.endsWith(".json")) {
+              const filename = Path.join(yearDir, dirent.name)
+              await this._loadNewManualSourceTransactionsFromFile(filename, ret)
+            }
+          }
+        }
+      }
+    }
+
+    return ret
+  }
+
+  async _loadNewManualSourceTransactionsFromFile(
+    filename: string,
+    results: Array<A.Model.entities.SourceTransaction>
+  ) {
+    const json = fs.readFileSync(filename).toString()
+    const items: Array<A.Model.ModelEntityJson> = JSON.parse(json)
+    for (const item of items) {
+      if (item["@type"] === "ManualTransaction") {
+        const {transactionId} = item
+        if (
+          !this.props.model.entities.SourceTransaction.byTransactionId.hasKey(
+            transactionId
+          )
+        ) {
+          const transaction =
+            this.props.model.entities.ManualTransaction.add(item)
           results.push(transaction)
         }
       }

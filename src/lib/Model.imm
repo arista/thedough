@@ -80,6 +80,10 @@ entity EversourceTransaction extends SourceTransaction {
   index byEversourceTransactionId: HashMap(unique) by (transactionId)
 }
 
+entity ManualTransaction extends SourceTransaction {
+  index byManualTransactionId: HashMap(unique) by (transactionId)
+}
+
 entity Account {
   id: string
   mut parentAccountId?: string

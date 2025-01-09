@@ -329,7 +329,6 @@ export class App {
         startDate,
         endDate,
         model,
-        configName,
       })
     console.log(
       `  Loaded ${newEversourceSourceTransactions.length} new eversource source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
@@ -337,6 +336,22 @@ export class App {
     if (newEversourceSourceTransactions.length > 0) {
       this._writeNewSourceTransactions({
         newSourceTransactions: newEversourceSourceTransactions,
+        sourceTransactionsFilename,
+      })
+    }
+
+    const newManualSourceTransactions =
+      await this._loadNewManualSourceTransactions({
+        startDate,
+        endDate,
+        model,
+      })
+    console.log(
+      `  Loaded ${newManualSourceTransactions.length} new eversource source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
+    )
+    if (newManualSourceTransactions.length > 0) {
+      this._writeNewSourceTransactions({
+        newSourceTransactions: newManualSourceTransactions,
         sourceTransactionsFilename,
       })
     }
@@ -549,18 +564,29 @@ export class App {
     startDate,
     endDate,
     model,
-    configName,
   }: {
     startDate: Date
     endDate: Date
     model: M.Model
-    configName: string
   }): Promise<Array<A.Model.entities.SourceTransaction>> {
-    const journalConfig = await this.getJournalConfig(configName)
     const loader = await this.sourceTransactionLoader
-    return await loader.loadNewEversourceSourceTransactions(
-      {startDate, endDate},
-    )
+    return await loader.loadNewEversourceSourceTransactions({
+      startDate,
+      endDate,
+    })
+  }
+
+  async _loadNewManualSourceTransactions({
+    startDate,
+    endDate,
+    model,
+  }: {
+    startDate: Date
+    endDate: Date
+    model: M.Model
+  }): Promise<Array<A.Model.entities.SourceTransaction>> {
+    const loader = await this.sourceTransactionLoader
+    return await loader.loadNewManualSourceTransactions({startDate, endDate})
   }
 
   _loadJournalEntries({

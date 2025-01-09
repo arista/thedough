@@ -16,4 +16,8 @@ export class SourceTransactionPaths {
   getEversourceDownloadedTransactionsDir(): string {
     return Path.join(this.downloadedTransactionsBaseDir, "eversource")
   }
+
+  getManualTransactionsDir(): string {
+    return Path.join(this.downloadedTransactionsBaseDir, "manual")
+  }
 }
