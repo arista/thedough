@@ -347,7 +347,7 @@ export class App {
         model,
       })
     console.log(
-      `  Loaded ${newManualSourceTransactions.length} new eversource source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
+      `  Loaded ${newManualSourceTransactions.length} new manual source transactions from between ${A.Utils.dateToYYYYMMDD(startDate)} and ${A.Utils.dateToYYYYMMDD(endDate)}`
     )
     if (newManualSourceTransactions.length > 0) {
       this._writeNewSourceTransactions({
