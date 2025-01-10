@@ -1,6 +1,7 @@
 import {A, M} from "../lib/index.js"
 import * as R from "react"
 import * as RR from "react-router"
+import * as RRD from "react-router-dom"
 import * as V from "./views.js"
 import * as I24S from "@heroicons/react/24/solid"
 import * as VM from "./ViewModel.js"
@@ -13,13 +14,22 @@ export const JournalPage = () => {
 
   // Get any URL parameters
   const params = RR.useParams()
+  const [searchParams] = RRD.useSearchParams()
 
   R.useEffect(() => {
     ;(async () => {
+      // Get the date to limit actual and budget entries by
+      const endDateStr = searchParams.get("endDate")
+      const endDate =
+        endDateStr == null
+          ? null
+          : endDateStr === "today"
+            ? new Date()
+            : new Date(Date.parse(endDateStr))
+
       // Load the model from the server
-      const model = await loadModelFromServer(api)
+      const model = await loadModelFromServer(api, endDate)
       const count = model.entities.JournalEntry.all.count
-      console.log(`${count} journal entries`)
       setModel(model)
       const journal = VM.Journal.fromModel(model)
       setJournal(journal)
@@ -38,14 +48,17 @@ export const JournalPage = () => {
   )
 }
 
-async function loadModelFromServer(api: M.IApi): Promise<M.Model> {
+async function loadModelFromServer(
+  api: M.IApi,
+  endDate: Date | null
+): Promise<M.Model> {
   // Load the model from the server
   const result = await api.model.entity.list({}).response
   const model = A.AppModel.createModel()
   for (const entity of result.entities) {
     model.entityFromJson(entity)
   }
-  A.AppModel.postProcessModel({model})
+  A.AppModel.postProcessModel({model, endDate})
   return model
 }
 

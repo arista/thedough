@@ -112,21 +112,21 @@ entity Account {
     inOrder: SortedList by (order)
   }
 
-  has-many journalEntryAccounts: JournalEntryAccount whose accountId = id {
+  owns-many journalEntryAccounts: JournalEntryAccount whose accountId = id {
     actuals: HashSet if(isActual)
   }
 
   // All entries including those from child and descendant accounts
-  has-many allEntries:AccountEntry whose accountId = id {
+  owns-many allEntries:AccountEntry whose accountId = id {
     actuals: HashSet if(isActual)
     byDate:SortedList(unique) by (date, id)
   }
 
-  has-many currentBalances: CurrentAccountBalance whose accountId = id {
+  owns-many currentBalances: CurrentAccountBalance whose accountId = id {
     byCurrency:SortedList(unique) by (currency)
   }
 
-  has-many balancesAsOf: AccountBalanceAsOf whose accountId = id {
+  owns-many balancesAsOf: AccountBalanceAsOf whose accountId = id {
     byCurrency:SortedList(unique) by (currency)
   }
 }
@@ -177,7 +177,7 @@ entity AccountEntry {
   belongs-to account: Account whose id = accountId
   belongs-to journalEntryAccount: JournalEntryAccount whose id = journalEntryAccountId
 
-  has-many runningBalances: RunningAccountBalance whose accountEntryId = id {
+  owns-many runningBalances: RunningAccountBalance whose accountEntryId = id {
     byCurrency:SortedList(unique) by (currency)
   }
 }

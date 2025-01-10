@@ -35,11 +35,42 @@ export function createModel(): M.Model {
   })
 }
 
-export function postProcessModel({model}: {model: M.Model}) {
+export function postProcessModel({
+  model,
+  startDate,
+  endDate,
+}: {
+  model: M.Model
+  startDate?: Date | null
+  endDate?: Date | null
+}) {
+  limitJournalEntriesByDate({model, startDate, endDate})
   addAccountEntryEntities({model})
   computeCurrentBalances({model})
   computeRunningBalances({model})
   incorporateBalancesAsOf({model})
+}
+
+function limitJournalEntriesByDate({
+  model,
+  startDate,
+  endDate,
+}: {
+  model: M.Model
+  startDate?: Date | null
+  endDate?: Date | null
+}) {
+  if (startDate != null || endDate != null) {
+    for (const je of model.entities.JournalEntry.all.entitiesArray) {
+      const date = new Date(Date.parse(je.date))
+      if (
+        (startDate != null && date < startDate) ||
+        (endDate != null && date > endDate)
+      ) {
+        je.remove()
+      }
+    }
+  }
 }
 
 // The JournalEntries are for specific accounts, but the effects of
