@@ -128,14 +128,14 @@ export function normalizeScheduledEntry(
           if (amountInCents >= 0) {
             creditsInCents += amountInCents
           } else {
-            debitsInCents += amountInCents
+            debitsInCents += -amountInCents
           }
           break
         case "debit":
           if (amountInCents >= 0) {
             debitsInCents += amountInCents
           } else {
-            creditsInCents += amountInCents
+            creditsInCents += -amountInCents
           }
           break
         default:

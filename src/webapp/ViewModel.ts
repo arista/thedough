@@ -25,7 +25,7 @@ export class Journal {
     account.open.value = true
   }
 
-  openAccountWithName(name: string) {
+  openAccountWithName(name: string): Account {
     const accountModel = A.Accounts.findAccount(this.model, name)
     if (accountModel == null) {
       throw new Error(`Account "${name}" is ambiguous or not found`)
@@ -41,6 +41,8 @@ export class Journal {
         account.open.value = true
       }
     }
+
+    return A.Utils.notNull(this.accountsById.get(accountModel.id))
   }
 
   static fromModel(model: M.Model): Journal {

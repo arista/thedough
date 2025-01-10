@@ -35,7 +35,23 @@ export const JournalPage = () => {
       setJournal(journal)
 
       if (params.accountName != null) {
-        journal.openAccountWithName(params.accountName)
+        const accountView = journal.openAccountWithName(params.accountName)
+
+        // See if entries should also be opened
+        const showEntries = searchParams.get("showEntries")
+        if (showEntries != null) {
+          switch (showEntries) {
+            case "entries":
+              accountView.entries.open.value = true
+              break
+            case "all":
+              accountView.allEntries.open.value = true
+              break
+            case "budgetAndActual":
+              accountView.budgetAndActualEntries.open.value = true
+              break
+          }
+        }
       }
     })()
   }, [])
