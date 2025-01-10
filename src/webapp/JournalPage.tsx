@@ -118,6 +118,7 @@ const AccountsHeaderView = ({
           onChange={(s) => onSortChange(s)}
         />
       </span>
+      <span style={{flexBasis: "10rem"}}></span>
       <span style={{flexBasis: "10rem"}}>
         <span>Overbudget</span>
         <AccountsSortSelect
