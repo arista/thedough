@@ -104,6 +104,13 @@ export class Accounts {
           direction === "asc"
         )
         break
+      case "overbudget":
+        A.Utils.sortBy(
+          ret,
+          (a) => [a.overbudgetForSorting, a.id],
+          direction === "asc"
+        )
+        break
       default:
         const unexpected: never = property
         break
@@ -122,6 +129,7 @@ export class Account {
     public creditOrDebit: A.JournalConfig.CreditOrDebit,
     public actualBalances: CurrencyAmounts,
     public budgetBalances: CurrencyAmounts,
+    public overbudget: CurrencyAmounts,
     public accounts: Accounts,
     public entries: AccountEntries,
     public allEntries: AccountEntries,
@@ -150,6 +158,17 @@ export class Account {
     }
   }
 
+  get overbudgetForSorting() {
+    const usdCurrency = this.overbudget.find((b) => b.currency === "USD")
+    if (usdCurrency != null) {
+      return usdCurrency.amountInCents
+    } else if (this.overbudget.length === 0) {
+      return 0
+    } else {
+      return this.overbudget[0].amountInCents
+    }
+  }
+
   static fromAccount(
     model: M.Model,
     account: A.Model.entities.Account,
@@ -165,6 +184,7 @@ export class Account {
       const {currency, budgetBalanceInCents} = b
       return new CurrencyAmount(currency, budgetBalanceInCents)
     })
+    const overbudget = subtractCurrencyAmounts(actualBalances, budgetBalances)
 
     const accountsList = account.children.inOrder.entitiesArray.map((a) =>
       Account.fromAccount(model, a, onNewAccount)
@@ -209,6 +229,7 @@ export class Account {
       actualCreditOrDebit,
       actualBalances,
       budgetBalances,
+      overbudget,
       accounts,
       entries,
       allEntries,
@@ -246,6 +267,7 @@ export type AccountsSortProperty =
   | "name"
   | "actualBalance"
   | "budgetBalance"
+  | "overbudget"
 export type SortDirection = "asc" | "desc"
 
 export class AccountEntry {
@@ -413,3 +435,41 @@ export type AccountEntriesSortProperty =
   | "memo"
   | "sourceTransactionId"
   | "associatedAccounts"
+
+function subtractCurrencyAmounts(
+  c1: CurrencyAmounts,
+  c2: CurrencyAmounts
+): CurrencyAmounts {
+  type CurrencyAmountPair = {
+    c1: CurrencyAmount | null
+    c2: CurrencyAmount | null
+  }
+
+  const currencyAmountPairByCurrency = new Map<string, CurrencyAmountPair>()
+
+  function getOrCreateCurrencyAmountPair(currency: string): CurrencyAmountPair {
+    const existing = currencyAmountPairByCurrency.get(currency)
+    if (existing != null) {
+      return existing
+    }
+    const created = {c1: null, c2: null}
+    currencyAmountPairByCurrency.set(currency, created)
+    return created
+  }
+
+  for (const c of c1) {
+    getOrCreateCurrencyAmountPair(c.currency).c1 = c
+  }
+  for (const c of c2) {
+    getOrCreateCurrencyAmountPair(c.currency).c2 = c
+  }
+
+  const ret: CurrencyAmounts = []
+  for (const [currency, amounts] of currencyAmountPairByCurrency.entries()) {
+    const amount1 = amounts.c1?.amountInCents ?? 0
+    const amount2 = amounts.c2?.amountInCents ?? 0
+    const amountInCents = amount1 - amount2
+    ret.push({currency, amountInCents})
+  }
+  return ret
+}

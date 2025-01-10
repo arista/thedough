@@ -118,6 +118,14 @@ const AccountsHeaderView = ({
           onChange={(s) => onSortChange(s)}
         />
       </span>
+      <span style={{flexBasis: "10rem"}}>
+        <span>Overbudget</span>
+        <AccountsSortSelect
+          sort={sort}
+          property="overbudget"
+          onChange={(s) => onSortChange(s)}
+        />
+      </span>
       <span style={{flexBasis: "10rem"}}></span>
     </div>
   )
@@ -159,7 +167,8 @@ const AccountDetailView = ({account}: {account: VM.Account}) => {
 }
 
 const AccountHeaderView = ({account}: {account: VM.Account}) => {
-  const {id, name, description, actualBalances, budgetBalances} = account
+  const {id, name, description, actualBalances, budgetBalances, overbudget} =
+    account
   const open = useLiveValue(account.open)
   const onOpenChange = (val: boolean) => {
     account.open.value = val
@@ -184,6 +193,12 @@ const AccountHeaderView = ({account}: {account: VM.Account}) => {
       </span>
       <span style={{flexBasis: "10rem"}}>
         <OtherCurrencyAmountsView amounts={budgetBalances} />
+      </span>
+      <span style={{flexBasis: "10rem"}}>
+        <USDCurrencyAmountView amounts={overbudget} />
+      </span>
+      <span style={{flexBasis: "10rem"}}>
+        <OtherCurrencyAmountsView amounts={overbudget} />
       </span>
       <span style={{flexBasis: "30rem"}}>
         <span className="italic text-xs">{description}</span>
