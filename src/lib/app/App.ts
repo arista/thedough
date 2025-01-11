@@ -291,7 +291,7 @@ export class App {
 
     console.log(`Downloading new source transactions`)
     const transactionDownloader = await this.transactionDownloader
-    transactionDownloader.downloadTransactions()
+    await transactionDownloader.downloadTransactions()
 
     console.log(`Loading old and new source transactions`)
     const newSourceTransactions = await this._loadNewSourceTransactions({
