@@ -38,6 +38,10 @@
     "model-watch": "npx immodel generate --watch src/lib/Model.imm build/generated/Model"
   },
   "devDependencies": {
+    "@oclif/core": "^4.2.3",
+    "@oclif/plugin-autocomplete": "^3.2.17",
+    "@oclif/plugin-help": "^6.2.21",
+    "@oclif/plugin-not-found": "^3.2.36",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-json": "^6.1.0",
@@ -50,7 +54,6 @@
     "@types/react-dom": "^18.3.1",
     "concurrently": "^9.0.1",
     "immodel-ts-codegen": "file:../immodel-ts/immodel-ts-codegen",
-    "oclif": "^4.15.9",
     "prettier": "^3.3.3",
     "rollup": "^4.24.3",
     "typescript": "^5.6.3"
@@ -58,10 +61,6 @@
   "dependencies": {
     "@breejs/later": "^4.2.0",
     "@heroicons/react": "^2.1.5",
-    "@oclif/core": "^4.0.29",
-    "@oclif/plugin-autocomplete": "^3.2.6",
-    "@oclif/plugin-help": "^6.2.15",
-    "@oclif/plugin-not-found": "^3.2.22",
     "@rollup/plugin-replace": "^6.0.1",
     "canonicalize": "^2.0.0",
     "columnify": "^1.6.0",
@@ -70,6 +69,7 @@
     "immodel-ts-runtime": "file:../immodel-ts/immodel-ts-runtime",
     "live-value": "^0.0.7",
     "neat-csv": "^7.0.0",
+    "oclif": "^4.17.13",
     "pkg-dir": "^8.0.0",
     "plaid": "^30.0.0",
     "react": "^18.3.1",
