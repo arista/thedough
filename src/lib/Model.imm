@@ -24,7 +24,7 @@ entity PlaidConfig {
 
 entity PlaidItemConfig {
   id: number(auto-increment)
-  plaidConfigId: number
+  mut plaidConfigId: number
   name: string
   displayName: string
   plaidAccessToken: string
@@ -40,7 +40,7 @@ entity PlaidItemConfig {
 
 entity PlaidAccountConfig {
   id: number(auto-increment)
-  plaidItemConfigId: number
+  mut plaidItemConfigId: number
   plaidAccountId: string
   name: string
   displayName: string
@@ -87,12 +87,12 @@ entity ManualTransaction extends SourceTransaction {
 entity Account {
   id: string
   mut parentAccountId?: string
-  parentName?: string
-  name: string
+  mut parentName?: string
+  mut name: string
   displayName: string
   creditOrDebit?: A.JournalConfig.CreditOrDebit
   description?: string
-  order: number
+  mut order: number
 
   actualCreditOrDebit: A.JournalConfig.CreditOrDebit(computed)
 
@@ -149,8 +149,8 @@ entity JournalEntry {
 
 entity JournalEntryAccount {
   id: number(auto-increment)
-  journalEntryId: string
-  accountId: string
+  mut journalEntryId: string
+  mut accountId: string
   creditOrDebit: A.JournalConfig.CreditOrDebit
   currency: string
   amountInCents: number
@@ -167,7 +167,7 @@ entity JournalEntryAccount {
 // Account and all that Account's ancestors
 entity AccountEntry {
   id: number(auto-increment)
-  accountId: string
+  mut accountId: string
   journalEntryAccountId: number
 
   date: string(computed)
@@ -184,7 +184,7 @@ entity AccountEntry {
 
 entity CurrentAccountBalance {
   id: number(auto-increment)
-  accountId: string
+  mut accountId: string
   currency: string
   mut actualBalanceInCents: number
   mut budgetBalanceInCents: number
@@ -195,7 +195,7 @@ entity CurrentAccountBalance {
 // The running balance for an account
 entity RunningAccountBalance {
   id: number(auto-increment)
-  accountEntryId: number
+  mut accountEntryId: number
   currency: string
   mut actualBalanceInCents: number
   mut budgetBalanceInCents: number
@@ -206,7 +206,7 @@ entity RunningAccountBalance {
 entity AccountBalanceAsOf {
   id: number(auto-increment)
   date: string
-  accountId: string
+  mut accountId: string
   currency: string
   actualBalanceInCents: number
   budgetBalanceInCents: number
