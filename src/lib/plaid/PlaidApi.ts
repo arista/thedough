@@ -89,19 +89,25 @@ export class PlaidApi {
   async getTransactions(
     request: GetTransactionsRequest
   ): Promise<Plaid.TransactionsGetResponse> {
-    //    console.log(`getTransactions: ${JSON.stringify(request, null, 2)}`)
-    const axiosResult = await this.plaidClient.transactionsGet({
-      access_token: this.getAccessToken(request.plaidItemName),
-      start_date: request.startDate,
-      end_date: request.endDate,
-      options: {
-        count: request.count,
-        offset: request.offset,
-        include_original_description: true,
-      },
-    })
-    const result: Plaid.TransactionsGetResponse = axiosResult.data
-    return result
+    //console.log(`getTransactions: ${JSON.stringify(request, null, 2)}`)
+    try {
+      const axiosResult = await this.plaidClient.transactionsGet({
+        access_token: this.getAccessToken(request.plaidItemName),
+        start_date: request.startDate,
+        end_date: request.endDate,
+        options: {
+          count: request.count,
+          offset: request.offset,
+          include_original_description: true,
+        },
+      })
+      const result: Plaid.TransactionsGetResponse = axiosResult.data
+      return result
+    }
+    catch (e) {
+      //console.log(`getTransactions FAILED: ${JSON.stringify(request, null, 2)}`)
+      throw e
+    }
   }
 }
 
