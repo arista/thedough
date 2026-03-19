@@ -21,6 +21,7 @@ export * as ServerApi from "./server/ServerApi.js"
 
 export type * as ConfigFile from "./config/ConfigFile.js"
 export type * as JournalConfig from "./journal/JournalConfig.js"
+export type * as JournalInfo from "./journal/JournalInfo.js"
 export * as Journal from "./journal/Journal.js"
 export * as BudgetConfig from "./journal/BudgetConfig.js"
 export * as ScheduledEntry from "./journal/ScheduledEntry.js"

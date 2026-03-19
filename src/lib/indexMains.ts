@@ -14,7 +14,7 @@ export {Server} from "./server/Server.js"
 export {createServerApi} from "./server/ServerApi.js"
 
 export type {ConfigFile} from "./config/ConfigFile.js"
-export type {JournalConfig, JournalConfigJSON} from "./journal/JournalConfig.js"
+export type {JournalConfig} from "./journal/JournalConfig.js"
 export type {BudgetConfig, NormalizedBudgetConfig} from "./journal/BudgetConfig.js"
 export type {Classification} from "./journal/Classification.js"
 export type {ClassificationRule} from "./journal/ClassificationRule.js"

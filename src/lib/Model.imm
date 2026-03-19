@@ -99,6 +99,8 @@ entity Account {
   index all:HashSet
   index byName: HashMap by (name)
 
+  index byId: HashMap(unique) by (id)
+
   index byParentAccountId: HashMap by (parentAccountId(include-null)) {
     inOrder: SortedList by (order)
   }

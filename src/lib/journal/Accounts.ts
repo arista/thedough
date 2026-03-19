@@ -3,7 +3,9 @@ import {A, M} from "../index.js"
 export function createAccounts(
   model: M.Model,
   chartOfAccounts: Array<A.JournalConfig.Account>
-) {
+): {
+  normalizedAccounts: Array<A.JournalInfo.Account>
+} {
   const accounts: Array<A.Model.entities.Account> = []
   for (let i = 0; i < chartOfAccounts.length; i++) {
     accounts.push(createAccount(model, chartOfAccounts[i], i))
@@ -49,6 +51,27 @@ export function createAccounts(
       `Unable to construct the Chart of Accounts becuse of the previous errors`
     )
   }
+
+  // Generate the normalized list of accounts, used for exporting to journalInfo.json
+  const normalizedAccounts: Array<A.JournalInfo.Account> = []
+  for (const account of chartOfAccounts) {
+    const maccount = model.entities.Account.byId.get(account.id)
+    const {id, name, displayName, description, balanceAsOf} = account
+    const creditOrDebit = maccount.actualCreditOrDebit
+    var naccount: A.JournalInfo.Account = {
+      id,
+      name,
+      displayName,
+      creditOrDebit,
+      description,
+      balanceAsOf,
+    }
+    if(maccount.parent != null) {
+      naccount.parentId = maccount.parent.id
+    }
+    normalizedAccounts.push(naccount)
+  }
+  return {normalizedAccounts}
 }
 
 export function createAccount(

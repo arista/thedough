@@ -179,11 +179,11 @@ export class App {
     classifiedTransactionsFilename: string
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     sourceTransactionsFilename: string
-    budgetConfig: M.NormalizedBudgetConfig
+    journalInfo: A.JournalInfo.JournalInfo
   }> {
     const journalConfig = await this.getJournalConfig(configName)
     const {startDate, endDate, chartOfAccounts} = journalConfig
-    A.Accounts.createAccounts(model, chartOfAccounts)
+    const {normalizedAccounts} = A.Accounts.createAccounts(model, chartOfAccounts)
     A.Accounts.checkPlaidAccounts(model)
 
     const dataDirectory = await this.dataDirectory
@@ -246,6 +246,17 @@ export class App {
     // Add the budget entries
     const {budgetConfig} = await this.loadBudget({configName, model})
 
+    const journalInfo: A.JournalInfo.JournalInfo = {
+      startDate: journalConfig.startDate,
+      endDate: journalConfig.endDate,
+      accounts: {
+        accounts: normalizedAccounts,
+      },
+      budget: {
+        entries: budgetConfig.entries,
+      },
+    }
+
     return {
       journalDir,
       journalEntriesFilename,
@@ -253,7 +264,7 @@ export class App {
       classifiedTransactionsFilename,
       classifiedTransactions,
       sourceTransactionsFilename,
-      budgetConfig,
+      journalInfo,
     }
   }
 
@@ -295,7 +306,7 @@ export class App {
       classifiedTransactionsFilename,
       classifiedTransactions,
       sourceTransactionsFilename,
-      budgetConfig,
+      journalInfo,
     } = await this.loadJournal({model, configName})
     const {startDate, endDate, classificationRules} = journalConfig
 
@@ -460,33 +471,7 @@ export class App {
     }
 
     // Write easily-readable versions of the journal and budget configurations
-    this.writeJournalConfig(journalDir, journalConfig)
-    this.writeBudgetConfig(journalDir, budgetConfig)
-  }
-
-  writeJournalConfig(journalDir: string, journalConfig: M.JournalConfig) {
-    // Leave out the irrelevant fields (journalDir, for example)
-    const {
-      startDate,
-      endDate,
-      chartOfAccounts,
-      scheduledSourceTransactions,
-      classificationRules,
-    } = journalConfig
-
-    const json:M.JournalConfigJSON = {
-      startDate,
-      endDate,
-      chartOfAccounts,
-      scheduledSourceTransactions,
-      classificationRules,
-    }
-
-    this.writeJSON(journalDir, "journalConfig.json", json)
-  }
-
-  writeBudgetConfig(journalDir: string, budgetConfig: M.NormalizedBudgetConfig) {
-    this.writeJSON(journalDir, "budgetConfig.json", budgetConfig)
+    this.writeJSON(journalDir, "journalInfo.json", journalInfo)
   }
 
   writeJSON(journalDir: string, filename: string, json: Object) {
