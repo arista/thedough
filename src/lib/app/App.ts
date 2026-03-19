@@ -179,7 +179,7 @@ export class App {
     classifiedTransactionsFilename: string
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     sourceTransactionsFilename: string
-    budgetConfig: M.BudgetConfig
+    budgetConfig: M.NormalizedBudgetConfig
   }> {
     const journalConfig = await this.getJournalConfig(configName)
     const {startDate, endDate, chartOfAccounts} = journalConfig
@@ -258,7 +258,7 @@ export class App {
   }
 
   async loadBudget({model, configName}: {model: M.Model; configName: string}): Promise<{
-    budgetConfig: M.BudgetConfig
+    budgetConfig: M.NormalizedBudgetConfig
   }> {
     const configFile = await this.configFile
     const budgetConfigFn = A.Utils.notNull(
@@ -266,7 +266,8 @@ export class App {
       `searching budgetConfigs for "${configName}"`
     )
     const budgetConfig = budgetConfigFn()
-    const {startDate, endDate, entries} = budgetConfig
+    const normalizedBudgetConfig = A.ScheduledEntry.normalizeBudgetConfig({budgetConfig, model})
+    const {startDate, endDate, entries} = normalizedBudgetConfig
 
     A.ScheduledEntry.addScheduledJournalEntries({
       entries,
@@ -277,7 +278,7 @@ export class App {
     })
 
     return {
-      budgetConfig
+      budgetConfig: normalizedBudgetConfig
     }
   }
 
@@ -484,7 +485,7 @@ export class App {
     this.writeJSON(journalDir, "journalConfig.json", json)
   }
 
-  writeBudgetConfig(journalDir: string, budgetConfig: M.BudgetConfig) {
+  writeBudgetConfig(journalDir: string, budgetConfig: M.NormalizedBudgetConfig) {
     this.writeJSON(journalDir, "budgetConfig.json", budgetConfig)
   }
 

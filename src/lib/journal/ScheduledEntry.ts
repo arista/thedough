@@ -30,6 +30,17 @@ export interface NormalizedScheduledEntryAccount {
   currency: string
 }
 
+export function normalizeBudgetConfig({
+  budgetConfig,
+  model }: {
+    budgetConfig: M.BudgetConfig,
+    model: M.Model
+  }): M.NormalizedBudgetConfig {
+  const {startDate, endDate, entries} = budgetConfig
+  const normalizedEntries = entries.map(e=>normalizeScheduledEntry(model, e))
+  return { startDate, endDate, entries: normalizedEntries }
+}
+
 export function addScheduledJournalEntries({
   entries,
   startDate,
@@ -37,14 +48,13 @@ export function addScheduledJournalEntries({
   model,
   budgetOrActual,
 }: {
-  entries: Array<ScheduledEntry>
+  entries: Array<NormalizedScheduledEntry>
   startDate: Date
   endDate: Date
   model: M.Model
   budgetOrActual: A.JournalConfig.BudgetOrActual
 }) {
   for (const entry of entries) {
-    const nentry = normalizeScheduledEntry(model, entry)
     const {schedule, memo} = entry
     const sched = later.parse.text(schedule)
     const {exceptions, error} = sched
@@ -58,7 +68,7 @@ export function addScheduledJournalEntries({
     if (Array.isArray(instances)) {
       for (let i = 0; i < instances.length; i++) {
         const instance = instances[i]
-        addScheduledJournalEntry(model, nentry, instance, i, budgetOrActual)
+        addScheduledJournalEntry(model, entry, instance, i, budgetOrActual)
       }
     }
   }
