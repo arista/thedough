@@ -179,6 +179,7 @@ export class App {
     classifiedTransactionsFilename: string
     classifiedTransactions: Array<A.Classification.ClassifiedTransaction>
     sourceTransactionsFilename: string
+    budgetConfig: M.BudgetConfig
   }> {
     const journalConfig = await this.getJournalConfig(configName)
     const {startDate, endDate, chartOfAccounts} = journalConfig
@@ -243,7 +244,7 @@ export class App {
     }
 
     // Add the budget entries
-    await this.loadBudget({configName, model})
+    const {budgetConfig} = await this.loadBudget({configName, model})
 
     return {
       journalDir,
@@ -252,10 +253,13 @@ export class App {
       classifiedTransactionsFilename,
       classifiedTransactions,
       sourceTransactionsFilename,
+      budgetConfig,
     }
   }
 
-  async loadBudget({model, configName}: {model: M.Model; configName: string}) {
+  async loadBudget({model, configName}: {model: M.Model; configName: string}): Promise<{
+    budgetConfig: M.BudgetConfig
+  }> {
     const configFile = await this.configFile
     const budgetConfigFn = A.Utils.notNull(
       configFile.budgetConfigs[configName],
@@ -271,6 +275,10 @@ export class App {
       model,
       budgetOrActual: "budget",
     })
+
+    return {
+      budgetConfig
+    }
   }
 
   async run({configName}: {configName: string}) {
@@ -286,6 +294,7 @@ export class App {
       classifiedTransactionsFilename,
       classifiedTransactions,
       sourceTransactionsFilename,
+      budgetConfig,
     } = await this.loadJournal({model, configName})
     const {startDate, endDate, classificationRules} = journalConfig
 
@@ -449,8 +458,61 @@ export class App {
       console.log(`No transactions need to be reveiwed!`)
     }
 
-    // Add the budget entries
-    await this.loadBudget({configName, model})
+    // Write easily-readable versions of the journal and budget configurations
+    this.writeJournalConfig(journalDir, journalConfig)
+    this.writeBudgetConfig(journalDir, budgetConfig)
+  }
+
+  writeJournalConfig(journalDir: string, journalConfig: M.JournalConfig) {
+    // Leave out the irrelevant fields (journalDir, for example)
+    const {
+      startDate,
+      endDate,
+      chartOfAccounts,
+      scheduledSourceTransactions,
+      classificationRules,
+    } = journalConfig
+
+    const json:M.JournalConfigJSON = {
+      startDate,
+      endDate,
+      chartOfAccounts,
+      scheduledSourceTransactions,
+      classificationRules,
+    }
+
+    this.writeJSON(journalDir, "journalConfig.json", json)
+  }
+
+  writeBudgetConfig(journalDir: string, budgetConfig: M.BudgetConfig) {
+    this.writeJSON(journalDir, "budgetConfig.json", budgetConfig)
+  }
+
+  writeJSON(journalDir: string, filename: string, json: Object) {
+    const f = Path.join(journalDir, filename)
+
+    // If there's already a JSON file, see if it matches
+    if (!this.matchesJSON(f, json)) {
+      console.log(`**** writing file ${f}`)
+      fs.writeFileSync(f, JSON.stringify(json, null, 2), "utf-8")
+    }
+  }
+
+  matchesJSON(filename: string, json: Object): boolean {
+    if (!fs.existsSync(filename)) {
+      return false
+    }
+    try {
+      const existingJson = JSON.parse(fs.readFileSync(filename, "utf-8"))
+
+      // check canonical versions
+      const canonicalExisting = A.Utils.toCanonicalJson(existingJson)
+      const canonicalNew = A.Utils.toCanonicalJson(json)
+      return canonicalExisting == canonicalNew
+    }
+    catch(e) {
+      return false
+    }
   }
 
   async unclassify({

@@ -9,6 +9,8 @@ export interface JournalConfig {
   classificationRules: Array<M.ClassificationRule>
 }
 
+export type JournalConfigJSON = Omit<M.JournalConfig, 'journalDir'>;
+
 export interface Account {
   id: string
   parent?: string
